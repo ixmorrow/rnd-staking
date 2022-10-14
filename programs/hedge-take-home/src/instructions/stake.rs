@@ -12,15 +12,11 @@ pub fn handler(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
     let user_entry = &mut ctx.accounts.user_stake_entry;
 
     // update pool state amount
-    msg!("Total staked initial: {}", pool.amount);
     pool.amount += pool.amount.checked_add(amount).unwrap();
-    msg!("Total staked current: {}", pool.amount);
 
     // update user stake entry
-    msg!("User initial stake balance: {}", user_entry.balance);
-    user_entry.balance += user_entry.balance.checked_add(amount).unwrap();
+    user_entry.balance = user_entry.balance.checked_add(amount).unwrap();
     user_entry.last_staked = Clock::get().unwrap().unix_timestamp;
-    msg!("User current stake balance: {}", user_entry.balance);
 
     Ok(())
 }
@@ -42,6 +38,7 @@ pub struct StakeCtx <'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
+        mut,
         seeds = [user.key().as_ref(), STAKE_ENTRY_SEED.as_bytes()],
         bump = user_stake_entry.bump
     )]

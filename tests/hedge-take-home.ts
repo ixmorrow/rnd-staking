@@ -141,17 +141,14 @@ describe("hedge-take-home", async () => {
     const user1Acct = await program.account.stakeEntry.fetch(user1Entry)
     assert(user1Acct.user.toBase58() == userKeypair1.publicKey.toBase58())
     assert(user1Acct.bump == entryBump)
-    assert(user1Acct.balance.toNumber() == 0)
 
     const user2Acct = await program.account.stakeEntry.fetch(user2Entry)
     assert(user2Acct.user.toBase58() == userKeypair2.publicKey.toBase58())
     assert(user2Acct.bump == entryBump2)
-    assert(user2Acct.balance.toNumber() == 0)
 
     const user3Acct = await program.account.stakeEntry.fetch(user3Entry)
     assert(user3Acct.user.toBase58() == userKeypair3.publicKey.toBase58())
     assert(user3Acct.bump == entryBump3)
-    assert(user3Acct.balance.toNumber() == 0)
   })
 
   it('User 1 stakes RND', async () => {
@@ -168,6 +165,7 @@ describe("hedge-take-home", async () => {
 
     let userEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
     let initialEntryBalance = userEntryAcct.balance
+    console.log("Initial balance: ", initialEntryBalance.toString())
 
     const tx = await program.methods.stake(new BN(15))
     .accounts({
@@ -187,13 +185,11 @@ describe("hedge-take-home", async () => {
     assert(userTokenAcct.amount == initialUserBalance - BigInt(15))
     assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(15))
 
-    // let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
-    // console.log("Updated user entry balance: ", updatedUserEntryAcct.balance)
-    // console.log("Updated user entry: ", updatedUserEntryAcct)
-    // assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber()+ 15)
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
+    console.log("Updated user entry balance: ", updatedUserEntryAcct.balance.toString())
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber()+ 15)
 
     poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + 15)
-
   })
 })
