@@ -17,6 +17,7 @@ pub fn handler(ctx: Context<InitializePool>) -> Result<()> {
     pool_state.vault_bump = *ctx.bumps.get("token_vault").unwrap();
     pool_state.vault_auth_bump = *ctx.bumps.get("vault_authority").unwrap();
     pool_state.vault_authority = ctx.accounts.vault_authority.key();
+    pool_state.rnd_donations = 0;
 
     Ok(())
 }

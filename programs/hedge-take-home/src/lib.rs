@@ -25,4 +25,8 @@ pub mod hedge_take_home {
     pub fn unstake(ctx: Context<UnstakeCtx>, amount: u64) -> Result<()> {
         unstake::handler(ctx, amount)
     }
+
+    pub fn donate(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
+        donate::handler(ctx, amount)
+    }
 }

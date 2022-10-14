@@ -4,7 +4,7 @@ use {
 };
 
 pub const STAKE_POOL_STATE_SEED: &str = "state";
-pub const STAKE_POOL_SIZE: usize = 8 + 32 + 32 + 1 + 8 + 32 + 8 + 1 + 1 + 32;
+pub const STAKE_POOL_SIZE: usize = 8 + 32 + 32 + 1 + 8 + 32 + 8 + 1 + 1 + 32 + 8;
 
 pub const VAULT_SEED: &str = "vault";
 pub const VAULT_AUTH_SEED: &str = "vault_authority";
@@ -25,6 +25,7 @@ pub struct PoolState {
     pub vault_bump: u8,
     pub vault_auth_bump: u8,
     pub vault_authority: Pubkey,
+    pub rnd_donations: u64,
 }
 
 #[account]
