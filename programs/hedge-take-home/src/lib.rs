@@ -21,4 +21,8 @@ pub mod hedge_take_home {
     pub fn stake(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
         stake::handler(ctx, amount)
     }
+
+    pub fn unstake(ctx: Context<UnstakeCtx>, amount: u64) -> Result<()> {
+        unstake::handler(ctx, amount)
+    }
 }

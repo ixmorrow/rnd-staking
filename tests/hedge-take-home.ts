@@ -192,4 +192,46 @@ describe("hedge-take-home", async () => {
     poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + 15)
   })
+
+  it('User 1 unstakes RND', async () => {
+    const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair1.publicKey)
+
+    let userTokenAcct = await getAccount(provider.connection, userAta)
+    let initialUserBalance = userTokenAcct.amount
+
+    let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    let initialVaultBalance = stakeVaultAcct.amount
+
+    let poolAcct = await program.account.poolState.fetch(pool)
+    let initialPoolAmt = poolAcct.amount
+
+    let userEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
+    let initialEntryBalance = userEntryAcct.balance
+    console.log("Initial balance: ", initialEntryBalance.toString())
+
+    const tx = await program.methods.unstake(new BN(15))
+    .accounts({
+      pool: pool,
+      tokenVault: stakeVault,
+      user: userKeypair1.publicKey,
+      userStakeEntry: user1StakeEntry,
+      userTokenAccount: userAta,
+      vaultAuthority: vaultAuthority,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([userKeypair1])
+    .rpc()
+
+    userTokenAcct = await getAccount(provider.connection, userAta)
+    stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    assert(userTokenAcct.amount == initialUserBalance + BigInt(15))
+    assert(stakeVaultAcct.amount == initialVaultBalance - BigInt(15))
+
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() - 15)
+
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() - 15)
+  })
 })
