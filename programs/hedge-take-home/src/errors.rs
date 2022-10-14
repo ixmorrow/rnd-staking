@@ -9,5 +9,7 @@ pub enum StakeError {
     #[msg("Mathematical overflow occured")]
     MathematicalOverflowError,
     #[msg("Incorrect prgram authority")]
-    InvalidProgramAuthority
+    InvalidProgramAuthority,
+    #[msg("Attempted to withdraw more RND rewards than are available")]
+    OverdrawError
 }

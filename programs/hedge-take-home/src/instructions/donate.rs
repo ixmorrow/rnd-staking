@@ -23,7 +23,6 @@ pub fn handler(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
 #[derive(Accounts)]
 pub struct DonateCtx<'info> {
     #[account(
-        mut,
         constraint = program_authority.key() == PROGRAM_AUTHORITY
         @ StakeError::InvalidProgramAuthority
     )]

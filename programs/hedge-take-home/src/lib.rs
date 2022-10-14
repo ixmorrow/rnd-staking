@@ -29,4 +29,8 @@ pub mod hedge_take_home {
     pub fn donate(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
         donate::handler(ctx, amount)
     }
+
+    pub fn authorized_withdrawal(ctx: Context<WithdrawalCtx>, amount: u64) -> Result<()> {
+        authorized_withdrawal::handler(ctx, amount)
+    }
 }

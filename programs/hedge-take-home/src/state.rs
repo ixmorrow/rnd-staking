@@ -14,6 +14,8 @@ pub const STAKE_ENTRY_SIZE: usize = 8 + 32 + 1 + 8 + 8;
 
 pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("9MNHTJJ1wd6uQrZfXk46T24qcWNZYpYfwZKk6zho4poV");
 
+pub const TREASURY_SEED: &str = "treasury";
+
 #[account]
 pub struct PoolState {
     pub authority: Pubkey,

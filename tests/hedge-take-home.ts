@@ -1,12 +1,13 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { HedgeTakeHome } from "../target/types/hedge_take_home"
-import { PublicKey, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
+import { PublicKey, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js'
+import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, createInitializeAccountInstruction, getAccount, createAccount, getOrCreateAssociatedTokenAccount } from '@solana/spl-token'
 import { delay, initializeTestUsers, safeAirdrop } from './utils/util'
 import { userKeypair1, userKeypair2, userKeypair3, programAuthority } from './testKeypairs/testKeypairs'
 import { assert } from "chai"
 import { BN } from "bn.js"
+import TransactionFactory from "@project-serum/anchor/dist/cjs/program/namespace/transaction";
 
 describe("hedge-take-home", async () => {
   anchor.setProvider(anchor.AnchorProvider.env())
@@ -17,6 +18,7 @@ describe("hedge-take-home", async () => {
   let tokenMint: PublicKey = null
   let stakeVault: PublicKey = null
   let pool: PublicKey = null
+  let treasuryVault: PublicKey = null
   let user1StakeEntry: PublicKey = null
   let user2StakeEntry: PublicKey = null
   let user3StakeEntry: PublicKey = null
@@ -53,6 +55,14 @@ describe("hedge-take-home", async () => {
       AuthorityType.MintTokens,
       vaultAuthority
     )
+
+    const treasuryVaultAcct = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      programAuthority,
+      tokenMint,
+      programAuthority.publicKey
+      )
+      treasuryVault = treasuryVaultAcct.address
   })
 
   it("Initialize Stake Pool", async () => {
@@ -91,6 +101,12 @@ describe("hedge-take-home", async () => {
       program.programId
     )
     user1StakeEntry = user1Entry
+
+    let [treasuryVaultAddress, treasuryBump] = await PublicKey.findProgramAddress(
+      [tokenMint.toBuffer(), programAuthority.publicKey.toBuffer(), Buffer.from("treasury")],
+      program.programId
+    )
+    treasuryVault = treasuryVaultAddress
     
     let userEntryAcct = await provider.connection.getAccountInfo(user1Entry)
 
@@ -240,7 +256,7 @@ describe("hedge-take-home", async () => {
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
 
-    const tx = await program.methods.donate(new BN(25))
+    const tx = await program.methods.donate(new BN(100))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
@@ -253,12 +269,42 @@ describe("hedge-take-home", async () => {
     .rpc()
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.rndDonations.toNumber() == initialPoolDonationAmt.toNumber() + 25)
+    assert(poolAcct.rndDonations.toNumber() == initialPoolDonationAmt.toNumber() + 100)
     assert(initialStakeAmt.toNumber() == poolAcct.amount.toNumber())
     console.log("Initial stake: ", initialStakeAmt.toNumber())
     console.log("Current: (should be same)", poolAcct.amount.toNumber())
     
     vaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(vaultAcct.amount == initialVaultAmt + BigInt(25))
+    assert(vaultAcct.amount == initialVaultAmt + BigInt(100))
+  })
+
+  it('Permissioned RND reward withdrawal', async () => {
+
+    const treasuryVaultAcct = await provider.connection.getAccountInfo(treasuryVault)
+    if (treasuryVaultAcct == null) {
+      const tx = new Transaction()
+      const ix = await createInitializeAccountInstruction(
+        treasuryVault,
+        tokenMint,
+        programAuthority.publicKey
+        )
+      tx.add(ix)
+
+      await provider.connection.sendTransaction(tx, [programAuthority])
+    }
+
+    const tx = await program.methods.authorizedWithdrawal(new BN(30))
+    .accounts({
+      programAuthority: programAuthority.publicKey,
+      poolState: pool,
+      treasuryVault: treasuryVault,
+      tokenVault: stakeVault,
+      vaultAuthority: vaultAuthority,
+      tokenProgram: TOKEN_PROGRAM_ID
+    })
+    .signers([programAuthority])
+    .rpc()
+
+
   })
 })

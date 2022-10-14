@@ -7,7 +7,7 @@ use {
 pub fn handler(ctx: Context<UnstakeCtx>, amount: u64) -> Result<()> {
 
     // program signer seeds
-    let auth_bump = *ctx.bumps.get("vault_authority").unwrap();
+    let auth_bump = ctx.accounts.pool.vault_auth_bump;
     let auth_seeds = &[VAULT_AUTH_SEED.as_bytes(), &[auth_bump]];
     let signer = &[&auth_seeds[..]];
 
@@ -58,7 +58,7 @@ pub struct UnstakeCtx <'info> {
     /// CHECK: This is not dangerous because we're only using this as a program signer
     #[account(
         seeds = [VAULT_AUTH_SEED.as_bytes()],
-        bump
+        bump = pool.vault_auth_bump
     )]
     pub vault_authority: AccountInfo<'info>,
 
