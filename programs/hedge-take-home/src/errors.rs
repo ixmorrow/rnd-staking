@@ -5,5 +5,7 @@ pub enum StakeError {
     #[msg("Token mint is invalid")]
     InvalidMint,
     #[msg("Mathematical overflow occured")]
-    MathematicalOverflowError
+    MathematicalOverflowError,
+    #[msg("Incorrect prgram authority")]
+    InvalidProgramAuthority
 }

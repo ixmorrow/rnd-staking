@@ -1,6 +1,6 @@
 use {
     anchor_lang::prelude::*,
-    crate::state::*,
+    crate::{state::*, errors::*},
     anchor_spl::{token::{TokenAccount, Mint, Token}},
 };
 
@@ -45,8 +45,11 @@ pub struct InitializePool<'info> {
     pub token_mint: Account<'info, Mint>,
 
     // global program authority
-    // should verify program_authority.key() == specific key with authority over this program to make this a permissioned ix
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = program_authority.key() == PROGRAM_AUTHORITY
+        @ StakeError::InvalidProgramAuthority
+    )]
     pub program_authority: Signer<'info>,
     /// CHECK: This is not dangerous because we're only using this as a program signer
     #[account(
