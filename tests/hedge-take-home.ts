@@ -97,7 +97,7 @@ describe("hedge-take-home", async () => {
   it("Create user stake entry accounts", async () => {
 
     const [user1Entry, entryBump] = await PublicKey.findProgramAddress(
-      [userKeypair1.publicKey.toBuffer(), Buffer.from("stake_entry")],
+      [userKeypair1.publicKey.toBuffer(), tokenMint.toBuffer(), Buffer.from("stake_entry")],
       program.programId
     )
     user1StakeEntry = user1Entry
@@ -114,14 +114,15 @@ describe("hedge-take-home", async () => {
       const tx = await program.methods.initStakeEntry()
       .accounts({
         user: userKeypair1.publicKey,
-        userStakeEntry: user1StakeEntry
+        userStakeEntry: user1StakeEntry,
+        poolState: pool
       })
       .signers([userKeypair1])
       .rpc()
     }
 
     const [user2Entry, entryBump2] = await PublicKey.findProgramAddress(
-      [userKeypair2.publicKey.toBuffer(), Buffer.from("stake_entry")],
+      [userKeypair2.publicKey.toBuffer(), tokenMint.toBuffer(), Buffer.from("stake_entry")],
       program.programId
     )
     user2StakeEntry = user2Entry
@@ -131,14 +132,15 @@ describe("hedge-take-home", async () => {
       const tx2 = await program.methods.initStakeEntry()
       .accounts({
         user: userKeypair2.publicKey,
-        userStakeEntry: user2StakeEntry
+        userStakeEntry: user2StakeEntry,
+        poolState: pool
       })
       .signers([userKeypair2])
       .rpc()
     }
 
     const [user3Entry, entryBump3] = await PublicKey.findProgramAddress(
-      [userKeypair3.publicKey.toBuffer(), Buffer.from("stake_entry")],
+      [userKeypair3.publicKey.toBuffer(), tokenMint.toBuffer(), Buffer.from("stake_entry")],
       program.programId
     )
     user3StakeEntry = user3Entry
@@ -148,7 +150,8 @@ describe("hedge-take-home", async () => {
       const tx3 = await program.methods.initStakeEntry()
       .accounts({
         user: userKeypair3.publicKey,
-        userStakeEntry: user3StakeEntry
+        userStakeEntry: user3StakeEntry,
+        poolState: pool
       })
       .signers([userKeypair3])
       .rpc()
@@ -182,7 +185,7 @@ describe("hedge-take-home", async () => {
     let userEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
     let initialEntryBalance = userEntryAcct.balance
 
-    const tx = await program.methods.stake(new BN(15))
+    const tx = await program.methods.stake(new BN(100 * LAMPORTS_PER_SOL))
     .accounts({
       pool: pool,
       tokenVault: stakeVault,
@@ -197,14 +200,86 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(userTokenAcct.amount == initialUserBalance - BigInt(15))
-    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(15))
+    // assert(userTokenAcct.amount == initialUserBalance - BigInt(100))
+    // assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(100))
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
-    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber()+ 15)
+    assert(updatedUserEntryAcct.balance.toNumber() / LAMPORTS_PER_SOL == initialEntryBalance.toNumber()+ 100)
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + 15)
+    assert(poolAcct.amount.toNumber() / LAMPORTS_PER_SOL == initialPoolAmt.toNumber() + 100)
+  })
+
+  it('User 2 stakes RND', async () => {
+    const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair2.publicKey)
+
+    let userTokenAcct = await getAccount(provider.connection, userAta)
+    let initialUserBalance = userTokenAcct.amount
+
+    let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    let initialVaultBalance = stakeVaultAcct.amount
+
+    let poolAcct = await program.account.poolState.fetch(pool)
+    let initialPoolAmt = poolAcct.amount
+
+    let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    let initialEntryBalance = userEntryAcct.balance
+
+    const tx = await program.methods.stake(new BN(100 * LAMPORTS_PER_SOL))
+    .accounts({
+      pool: pool,
+      tokenVault: stakeVault,
+      user: userKeypair2.publicKey,
+      userStakeEntry: user2StakeEntry,
+      userTokenAccount: userAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([userKeypair2])
+    .rpc()
+
+    userTokenAcct = await getAccount(provider.connection, userAta)
+    stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    console.log("User token acct: ", userTokenAcct.amount)
+    console.log("Vault token acct: ", stakeVaultAcct.amount)
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(100*LAMPORTS_PER_SOL))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(100*LAMPORTS_PER_SOL))
+
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (100*LAMPORTS_PER_SOL))
+
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (100*LAMPORTS_PER_SOL))
+  })
+
+  it('Permissioned RND donation', async () => {
+    let poolAcct = await program.account.poolState.fetch(pool)
+    const initialPoolDonationAmt = poolAcct.distributionAmt
+    const initialStakeAmt = poolAcct.amount
+
+    let vaultAcct = await getAccount(provider.connection, stakeVault)
+    const initialVaultAmt = vaultAcct.amount
+
+    const tx = await program.methods.distribute(new BN(100 * LAMPORTS_PER_SOL))
+    .accounts({
+      programAuthority: programAuthority.publicKey,
+      poolState: pool,
+      tokenVault: stakeVault,
+      tokenMint: tokenMint,
+      mintAuth: vaultAuthority,
+      tokenProgram: TOKEN_PROGRAM_ID
+    })
+    .signers([programAuthority])
+    .rpc()
+
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.distributionAmt.toNumber() == initialPoolDonationAmt.toNumber() + (100*LAMPORTS_PER_SOL))
+    assert(poolAcct.amount.toNumber() == initialStakeAmt.toNumber() + (100*LAMPORTS_PER_SOL))
+    console.log("Initial stake: ", initialStakeAmt.toNumber())
+    console.log("Current: ", poolAcct.amount.toNumber())
+    
+    vaultAcct = await getAccount(provider.connection, stakeVault)
+    assert(vaultAcct.amount == initialVaultAmt + BigInt(100*LAMPORTS_PER_SOL))
   })
 
   it('User 1 unstakes RND', async () => {
@@ -222,7 +297,7 @@ describe("hedge-take-home", async () => {
     let userEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
     let initialEntryBalance = userEntryAcct.balance
 
-    const tx = await program.methods.unstake(new BN(5))
+    const tx = await program.methods.unstake()
     .accounts({
       pool: pool,
       tokenVault: stakeVault,
@@ -230,6 +305,7 @@ describe("hedge-take-home", async () => {
       userStakeEntry: user1StakeEntry,
       userTokenAccount: userAta,
       vaultAuthority: vaultAuthority,
+      tokenMint: tokenMint,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId
     })
@@ -238,60 +314,30 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(userTokenAcct.amount == initialUserBalance + BigInt(5))
-    assert(stakeVaultAcct.amount == initialVaultBalance - BigInt(5))
+    //assert(userTokenAcct.amount == initialUserBalance + initialEntryBalance.toNumber())
+    //assert(stakeVaultAcct.amount == initialVaultBalance - initialEntryBalance.toNumber())
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
-    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() - 5)
+    assert(updatedUserEntryAcct.balance.toNumber() == 0)
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() - 5)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() - initialEntryBalance.toNumber())
   })
 
-  it('Permissioned RND donation', async () => {
-    let poolAcct = await program.account.poolState.fetch(pool)
-    const initialPoolDonationAmt = poolAcct.rndDonations
-    const initialStakeAmt = poolAcct.amount
+  // it('Permissioned RND reward burn', async () => {
 
-    let vaultAcct = await getAccount(provider.connection, stakeVault)
-    const initialVaultAmt = vaultAcct.amount
-
-    const tx = await program.methods.donate(new BN(100))
-    .accounts({
-      programAuthority: programAuthority.publicKey,
-      poolState: pool,
-      tokenVault: stakeVault,
-      tokenMint: tokenMint,
-      mintAuth: vaultAuthority,
-      tokenProgram: TOKEN_PROGRAM_ID
-    })
-    .signers([programAuthority])
-    .rpc()
-
-    poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.rndDonations.toNumber() == initialPoolDonationAmt.toNumber() + 100)
-    assert(initialStakeAmt.toNumber() == poolAcct.amount.toNumber())
-    console.log("Initial stake: ", initialStakeAmt.toNumber())
-    console.log("Current: (should be same)", poolAcct.amount.toNumber())
-    
-    vaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(vaultAcct.amount == initialVaultAmt + BigInt(100))
-  })
-
-  it('Permissioned RND reward burn', async () => {
-
-    const tx = await program.methods.burn(new BN(30))
-    .accounts({
-      programAuthority: programAuthority.publicKey,
-      poolState: pool,
-      tokenVault: stakeVault,
-      vaultAuthority: vaultAuthority,
-      tokenMint: tokenMint,
-      tokenProgram: TOKEN_PROGRAM_ID
-    })
-    .signers([programAuthority])
-    .rpc()
+  //   const tx = await program.methods.burn(new BN(30))
+  //   .accounts({
+  //     programAuthority: programAuthority.publicKey,
+  //     poolState: pool,
+  //     tokenVault: stakeVault,
+  //     vaultAuthority: vaultAuthority,
+  //     tokenMint: tokenMint,
+  //     tokenProgram: TOKEN_PROGRAM_ID
+  //   })
+  //   .signers([programAuthority])
+  //   .rpc()
 
 
-  })
+  // })
 })

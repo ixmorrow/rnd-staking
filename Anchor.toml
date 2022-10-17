@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-hedge_take_home = "2caX34vXoWbkVmYJmiV5HP1miKbpfhQkuWcBD13hYuKo"
+hedge_take_home = "4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa"
 
 [registry]
 url = "https://api.apr.dev"

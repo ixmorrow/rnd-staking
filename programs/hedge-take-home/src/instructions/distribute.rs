@@ -1,10 +1,10 @@
 use {
     anchor_lang::prelude::*,
-    crate::{state::*, errors::*},
+    crate::{state::*, errors::*, utils::*},
     anchor_spl::{token::{TokenAccount, MintTo, Token, Mint, mint_to}},
 };
 
-pub fn handler(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<DistributeCtx>, amount: u64) -> Result<()> {
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool_state.vault_auth_bump;
@@ -15,13 +15,25 @@ pub fn handler(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
     mint_to(ctx.accounts.mint_ctx().with_signer(signer), amount)?;
 
     // update state
-    ctx.accounts.pool_state.rnd_donations = ctx.accounts.pool_state.rnd_donations.checked_add(amount).unwrap();
+    let pool_state = &mut ctx.accounts.pool_state;
+    if pool_state.amount != 0 {
+        pool_state.current_reward_ratio = pool_state.current_reward_ratio.checked_add((amount as u128).checked_mul(MULT).unwrap()
+        .checked_div(pool_state.amount as u128).unwrap()
+        .try_into().unwrap()).unwrap();      
+
+        msg!("Rewards to distribute: {}", amount);
+        msg!("Total staked: {}", pool_state.amount);
+        msg!("Reward amount: {}", pool_state.current_reward_ratio);
+    }
+
+    pool_state.distribution_amt = amount;
+    pool_state.amount = pool_state.amount.checked_add(amount).unwrap();
 
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct DonateCtx<'info> {
+pub struct DistributeCtx<'info> {
     #[account(
         constraint = program_authority.key() == PROGRAM_AUTHORITY
         @ StakeError::InvalidProgramAuthority
@@ -54,7 +66,7 @@ pub struct DonateCtx<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-impl<'info> DonateCtx <'info> {
+impl<'info> DistributeCtx <'info> {
     pub fn mint_ctx(&self) -> CpiContext<'_, '_, '_, 'info, MintTo<'info>> {
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = MintTo {

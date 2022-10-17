@@ -7,9 +7,9 @@ use {
 pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
 
     // verify that amount is <= rnd donations
-    if amount > ctx.accounts.pool_state.rnd_donations {
-        return err!(StakeError::OverdrawError)
-    }
+    // if amount > ctx.accounts.pool_state.rnd_donations {
+    //     return err!(StakeError::OverdrawError)
+    // }
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool_state.vault_auth_bump;
@@ -19,9 +19,11 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     // burn the tokens
     burn(ctx.accounts.burn_ctx().with_signer(signer), amount)?;
 
+    // calculate new reward rate
+
     // update state in pool
-    let pool = &mut ctx.accounts.pool_state;
-    pool.rnd_donations = pool.rnd_donations.checked_sub(amount).unwrap();
+    // let pool = &mut ctx.accounts.pool_state;
+    // pool.rnd_donations = pool.rnd_donations.checked_sub(amount).unwrap();
 
     Ok(())
 }

@@ -19,3 +19,4 @@ default = []
 anchor-lang = "0.25.0"
 anchor-spl = "0.25.0"
 solana-program = "~1.10.29"
+spl-token = "3.3.0"

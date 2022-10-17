@@ -2,6 +2,7 @@ import { userKeypair1, userKeypair2, userKeypair3 } from '../testKeypairs/testKe
 import { PublicKey, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID, mintTo, createAssociatedTokenAccount } from '@solana/spl-token'
 
+
 export function delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
@@ -43,15 +44,16 @@ export async function initializeTestUsers(connection: Connection, mint: PublicKe
         mint,
         user1Ata,
         mintAuthority,
-        1000
+        1000 * LAMPORTS_PER_SOL
     )
+
     await mintTo(
         connection,
         userKeypair2,
         mint,
         user2Ata,
         mintAuthority,
-        1000
+        1000 * LAMPORTS_PER_SOL
     )
     await mintTo(
         connection,
@@ -59,7 +61,7 @@ export async function initializeTestUsers(connection: Connection, mint: PublicKe
         mint,
         user3Ata,
         mintAuthority,
-        1000
+        1000 * LAMPORTS_PER_SOL
     )
 }
 

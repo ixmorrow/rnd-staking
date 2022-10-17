@@ -1,10 +1,11 @@
 pub mod errors;
 pub mod instructions;
 pub mod state;
+pub mod utils;
 
 use {anchor_lang::prelude::*, instructions::*};
 
-declare_id!("2caX34vXoWbkVmYJmiV5HP1miKbpfhQkuWcBD13hYuKo");
+declare_id!("4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa");
 
 #[program]
 pub mod hedge_take_home {
@@ -22,12 +23,12 @@ pub mod hedge_take_home {
         stake::handler(ctx, amount)
     }
 
-    pub fn unstake(ctx: Context<UnstakeCtx>, amount: u64) -> Result<()> {
-        unstake::handler(ctx, amount)
+    pub fn unstake(ctx: Context<UnstakeCtx>) -> Result<()> {
+        unstake::handler(ctx)
     }
 
-    pub fn donate(ctx: Context<DonateCtx>, amount: u64) -> Result<()> {
-        donate::handler(ctx, amount)
+    pub fn distribute(ctx: Context<DistributeCtx>, amount: u64) -> Result<()> {
+        distribute::handler(ctx, amount)
     }
 
     pub fn burn(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {

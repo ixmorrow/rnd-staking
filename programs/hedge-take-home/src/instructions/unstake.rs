@@ -1,18 +1,58 @@
 use {
     anchor_lang::prelude::*,
     crate::{state::*, errors::*},
-    anchor_spl::{token::{TokenAccount, Token, Transfer, transfer}},
+    anchor_spl::{token::{TokenAccount, Token, Mint}},
+    solana_program::{program::invoke_signed},
+    spl_token::instruction::transfer_checked,
 };
 
-pub fn handler(ctx: Context<UnstakeCtx>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
+    let rate: u128 = ctx.accounts.pool.current_reward_ratio
+        .checked_sub(ctx.accounts.user_stake_entry.initial_reward_ratio).unwrap();
+
+    msg!("User staked amount: {}", ctx.accounts.user_stake_entry.balance);
+    let amount = ctx.accounts.user_stake_entry.balance;
+
+    // calculate reward amount accrued
+    let out_amount: u128 = (amount as u128).checked_add((amount as u128).checked_mul(rate).unwrap()
+        .checked_div(MULT).unwrap()
+        .try_into().unwrap()).unwrap();
+
+    msg!("Rewards to distribute: {}", ctx.accounts.pool.distribution_amt);
+    msg!("Total staked: {}", ctx.accounts.pool.amount);
+    msg!("Current ratio: {}", ctx.accounts.pool.current_reward_ratio);
+    msg!("Requested amount: {}", amount);
+    msg!("Initial ratio: {}", ctx.accounts.user_stake_entry.initial_reward_ratio);
+    msg!("Reward amount: {}", out_amount);   
+    msg!("Reward amount (u64): {}", out_amount as u64);   
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool.vault_auth_bump;
     let auth_seeds = &[VAULT_AUTH_SEED.as_bytes(), &[auth_bump]];
     let signer = &[&auth_seeds[..]];
 
-    // transfer from vault to user
-    transfer(ctx.accounts.transfer_ctx().with_signer(signer), amount)?;
+    let transfer_ix = transfer_checked(
+        &ctx.accounts.token_program.key(),
+        &ctx.accounts.token_vault.key(),
+        &ctx.accounts.token_mint.key(),
+        &ctx.accounts.user_token_account.key(),
+        &ctx.accounts.vault_authority.key(),
+        &[&ctx.accounts.vault_authority.key()],
+        out_amount as u64,
+        9
+    ).unwrap();
+
+    invoke_signed(
+        &transfer_ix,
+        &[
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_vault.to_account_info(),
+            ctx.accounts.token_mint.to_account_info(),
+            ctx.accounts.user_token_account.to_account_info(),
+            ctx.accounts.vault_authority.to_account_info()
+        ],
+        signer
+    )?;
 
     let pool = &mut ctx.accounts.pool;
     let user_entry = &mut ctx.accounts.user_stake_entry;
@@ -45,7 +85,7 @@ pub struct UnstakeCtx <'info> {
     pub user: Signer<'info>,
     #[account(
         mut,
-        seeds = [user.key().as_ref(), STAKE_ENTRY_SEED.as_bytes()],
+        seeds = [user.key().as_ref(), pool.token_mint.key().as_ref(), STAKE_ENTRY_SEED.as_bytes()],
         bump = user_stake_entry.bump
     )]
     pub user_stake_entry: Account<'info, StakeEntry>,
@@ -61,20 +101,13 @@ pub struct UnstakeCtx <'info> {
         bump = pool.vault_auth_bump
     )]
     pub vault_authority: AccountInfo<'info>,
+    #[account(
+        mut,
+        constraint = token_mint.key() == pool.token_mint
+        @ StakeError::InvalidMint
+    )]
+    pub token_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>
-}
-
-impl<'info> UnstakeCtx <'info> {
-    pub fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        let cpi_program = self.token_program.to_account_info();
-        let cpi_accounts = Transfer {
-            from: self.token_vault.to_account_info(),
-            to: self.user_token_account.to_account_info(),
-            authority: self.vault_authority.to_account_info()
-        };
-
-        CpiContext::new(cpi_program, cpi_accounts)
-    }
 }
