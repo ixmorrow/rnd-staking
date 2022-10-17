@@ -1,10 +1,10 @@
 use {
     anchor_lang::prelude::*,
     crate::{state::*, errors::*},
-    anchor_spl::{token::{TokenAccount, Token, Transfer, transfer}},
+    anchor_spl::{token::{TokenAccount, Token, Mint, Burn, burn}},
 };
 
-pub fn handler(ctx: Context<WithdrawalCtx>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
 
     // verify that amount is <= rnd donations
     if amount > ctx.accounts.pool_state.rnd_donations {
@@ -12,12 +12,12 @@ pub fn handler(ctx: Context<WithdrawalCtx>, amount: u64) -> Result<()> {
     }
 
     // program signer seeds
-    let auth_bump = *ctx.bumps.get("vault_authority").unwrap();
+    let auth_bump = ctx.accounts.pool_state.vault_auth_bump;
     let auth_seeds = &[VAULT_AUTH_SEED.as_bytes(), &[auth_bump]];
     let signer = &[&auth_seeds[..]];
 
-    // transfer tokens from stake pool to treasury
-    transfer(ctx.accounts.transfer_ctx().with_signer(signer), amount)?;
+    // burn the tokens
+    burn(ctx.accounts.burn_ctx().with_signer(signer), amount)?;
 
     // update state in pool
     let pool = &mut ctx.accounts.pool_state;
@@ -27,7 +27,7 @@ pub fn handler(ctx: Context<WithdrawalCtx>, amount: u64) -> Result<()> {
 }
 
 #[derive(Accounts)]
-pub struct WithdrawalCtx<'info> {
+pub struct BurnCtx<'info> {
     #[account(
         constraint = program_authority.key() == PROGRAM_AUTHORITY
         @ StakeError::InvalidProgramAuthority
@@ -41,12 +41,6 @@ pub struct WithdrawalCtx<'info> {
     pub pool_state: Account<'info, PoolState>,
     #[account(
         mut,
-        seeds = [pool_state.token_mint.key().as_ref(), program_authority.key().as_ref(), TREASURY_SEED.as_bytes()],
-        bump
-    )]
-    pub treasury_vault: Account<'info, TokenAccount>,
-    #[account(
-        mut,
         seeds = [pool_state.token_mint.key().as_ref(), pool_state.vault_authority.key().as_ref(), VAULT_SEED.as_bytes()],
         bump = pool_state.vault_bump,
     )]
@@ -57,15 +51,21 @@ pub struct WithdrawalCtx<'info> {
         bump = pool_state.vault_auth_bump
     )]
     pub vault_authority: AccountInfo<'info>,
+    #[account(
+        mut,
+        constraint = token_mint.key() == pool_state.token_mint
+        @ StakeError::InvalidMint
+    )]
+    pub token_mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>
 }
 
-impl<'info> WithdrawalCtx <'info> {
-    pub fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+impl<'info> BurnCtx <'info> {
+    pub fn burn_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Burn<'info>> {
         let cpi_program = self.token_program.to_account_info();
-        let cpi_accounts = Transfer {
+        let cpi_accounts = Burn {
+            mint: self.token_mint.to_account_info(),
             from: self.token_vault.to_account_info(),
-            to: self.treasury_vault.to_account_info(),
             authority: self.vault_authority.to_account_info()
         };
 

@@ -278,28 +278,15 @@ describe("hedge-take-home", async () => {
     assert(vaultAcct.amount == initialVaultAmt + BigInt(100))
   })
 
-  it('Permissioned RND reward withdrawal', async () => {
+  it('Permissioned RND reward burn', async () => {
 
-    const treasuryVaultAcct = await provider.connection.getAccountInfo(treasuryVault)
-    if (treasuryVaultAcct == null) {
-      const tx = new Transaction()
-      const ix = await createInitializeAccountInstruction(
-        treasuryVault,
-        tokenMint,
-        programAuthority.publicKey
-        )
-      tx.add(ix)
-
-      await provider.connection.sendTransaction(tx, [programAuthority])
-    }
-
-    const tx = await program.methods.authorizedWithdrawal(new BN(30))
+    const tx = await program.methods.burn(new BN(30))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
-      treasuryVault: treasuryVault,
       tokenVault: stakeVault,
       vaultAuthority: vaultAuthority,
+      tokenMint: tokenMint,
       tokenProgram: TOKEN_PROGRAM_ID
     })
     .signers([programAuthority])
