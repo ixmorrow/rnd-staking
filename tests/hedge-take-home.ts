@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { HedgeTakeHome } from "../target/types/hedge_take_home"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount, getOrCreateAssociatedTokenAccount, burn, amountToUiAmount } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
 import { delay, initializeTestUsers, safeAirdrop } from './utils/util'
 import { userKeypair1, userKeypair2, userKeypair3, programAuthority } from './testKeypairs/testKeypairs'
 import { assert } from "chai"
@@ -17,7 +17,6 @@ describe("hedge-take-home", async () => {
   let tokenMint: PublicKey = null
   let stakeVault: PublicKey = null
   let pool: PublicKey = null
-  let treasuryVault: PublicKey = null
   let user1StakeEntry: PublicKey = null
   let user2StakeEntry: PublicKey = null
   let user3StakeEntry: PublicKey = null
@@ -54,14 +53,6 @@ describe("hedge-take-home", async () => {
       AuthorityType.MintTokens,
       vaultAuthority
     )
-
-    const treasuryVaultAcct = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      programAuthority,
-      tokenMint,
-      programAuthority.publicKey
-      )
-      treasuryVault = treasuryVaultAcct.address
   })
 
   it("Initialize Stake Pool", async () => {
@@ -106,12 +97,6 @@ describe("hedge-take-home", async () => {
       program.programId
     )
     user1StakeEntry = user1Entry
-
-    let [treasuryVaultAddress, treasuryBump] = await PublicKey.findProgramAddress(
-      [tokenMint.toBuffer(), programAuthority.publicKey.toBuffer(), Buffer.from("treasury")],
-      program.programId
-    )
-    treasuryVault = treasuryVaultAddress
     
     let userEntryAcct = await provider.connection.getAccountInfo(user1Entry)
 
