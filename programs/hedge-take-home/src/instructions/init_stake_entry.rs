@@ -9,6 +9,7 @@ pub fn handler(ctx: Context<InitEntryCtx>) -> Result<()> {
     user_entry.bump = *ctx.bumps.get("user_stake_entry").unwrap();
     user_entry.balance = 0;
     user_entry.initial_reward_ratio = ctx.accounts.pool_state.current_reward_ratio;
+    user_entry.initial_burn_ratio = ctx.accounts.pool_state.current_burn_ratio;
 
     Ok(())
 }

@@ -7,24 +7,29 @@ use {
 };
 
 pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
-    let rate: u128 = ctx.accounts.pool.current_reward_ratio
+    let reward_rate: u128 = ctx.accounts.pool.current_reward_ratio
         .checked_sub(ctx.accounts.user_stake_entry.initial_reward_ratio).unwrap();
+
+    let burn_rate: u128 = ctx.accounts.pool.current_burn_ratio
+        .checked_sub(ctx.accounts.user_stake_entry.initial_burn_ratio).unwrap();
 
     msg!("User staked amount: {}", ctx.accounts.user_stake_entry.balance);
     let amount = ctx.accounts.user_stake_entry.balance;
 
+    msg!("Reward rate: {}", reward_rate);
     // calculate reward amount accrued
-    let out_amount: u128 = (amount as u128).checked_add((amount as u128).checked_mul(rate).unwrap()
+    let mut out_amount: u128 = (amount as u128).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
         .checked_div(MULT).unwrap()
         .try_into().unwrap()).unwrap();
+    msg!("Amount after reward distribution: {}", out_amount);
 
-    msg!("Rewards to distribute: {}", ctx.accounts.pool.distribution_amt);
-    msg!("Total staked: {}", ctx.accounts.pool.amount);
-    msg!("Current ratio: {}", ctx.accounts.pool.current_reward_ratio);
-    msg!("Requested amount: {}", amount);
-    msg!("Initial ratio: {}", ctx.accounts.user_stake_entry.initial_reward_ratio);
-    msg!("Reward amount: {}", out_amount);   
-    msg!("Reward amount (u64): {}", out_amount as u64);   
+    msg!("Burn rate: {}", burn_rate);
+    // calculate amount burned
+    out_amount = out_amount.checked_sub((out_amount as u128).checked_mul(burn_rate).unwrap()
+        .checked_div(MULT).unwrap()
+        .try_into().unwrap()).unwrap();
+    msg!("Amount after burn applied: {}", out_amount);
+
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool.vault_auth_bump;
@@ -58,10 +63,11 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     let user_entry = &mut ctx.accounts.user_stake_entry;
 
      // update pool state amount
-    pool.amount = pool.amount.checked_sub(amount).unwrap();
+    pool.amount = pool.amount.checked_sub(out_amount.try_into().unwrap()).unwrap();
+    msg!("Total staked after withdrawal: {}", pool.amount);
 
     // update user stake entry
-    user_entry.balance = user_entry.balance.checked_sub(amount).unwrap();
+    user_entry.balance = 0;
     user_entry.last_staked = Clock::get().unwrap().unix_timestamp;
 
     Ok(())

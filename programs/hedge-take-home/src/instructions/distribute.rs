@@ -1,6 +1,6 @@
 use {
     anchor_lang::prelude::*,
-    crate::{state::*, errors::*, utils::*},
+    crate::{state::*, errors::*},
     anchor_spl::{token::{TokenAccount, MintTo, Token, Mint, mint_to}},
 };
 
@@ -23,10 +23,9 @@ pub fn handler(ctx: Context<DistributeCtx>, amount: u64) -> Result<()> {
 
         msg!("Rewards to distribute: {}", amount);
         msg!("Total staked: {}", pool_state.amount);
-        msg!("Reward amount: {}", pool_state.current_reward_ratio);
+        msg!("Reward rate: {}", pool_state.current_reward_ratio);
     }
 
-    pool_state.distribution_amt = amount;
     pool_state.amount = pool_state.amount.checked_add(amount).unwrap();
 
     Ok(())

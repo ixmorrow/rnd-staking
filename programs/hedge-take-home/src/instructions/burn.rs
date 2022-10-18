@@ -6,11 +6,6 @@ use {
 
 pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
 
-    // verify that amount is <= rnd donations
-    // if amount > ctx.accounts.pool_state.rnd_donations {
-    //     return err!(StakeError::OverdrawError)
-    // }
-
     // program signer seeds
     let auth_bump = ctx.accounts.pool_state.vault_auth_bump;
     let auth_seeds = &[VAULT_AUTH_SEED.as_bytes(), &[auth_bump]];
@@ -20,10 +15,22 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     burn(ctx.accounts.burn_ctx().with_signer(signer), amount)?;
 
     // calculate new reward rate
+    let pool_state = &mut ctx.accounts.pool_state;
+    msg!("Tokens to burn: {}", amount);
+    msg!("Initial total staked: {}", pool_state.amount);
+    msg!("Initial burn ratio: {}", pool_state.current_burn_ratio);
+
+    if pool_state.amount != 0 {
+        pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_add((amount as u128).checked_mul(MULT).unwrap()
+        .checked_div(pool_state.amount as u128).unwrap()
+        .try_into().unwrap()).unwrap();      
+    }
 
     // update state in pool
-    // let pool = &mut ctx.accounts.pool_state;
-    // pool.rnd_donations = pool.rnd_donations.checked_sub(amount).unwrap();
+    pool_state.amount = pool_state.amount.checked_sub(amount).unwrap();
+
+    msg!("Current total staked: {}", pool_state.amount);
+    msg!("Current burn rate: {}", pool_state.current_burn_ratio);
 
     Ok(())
 }

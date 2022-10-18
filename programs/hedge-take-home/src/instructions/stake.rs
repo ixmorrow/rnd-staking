@@ -19,8 +19,8 @@ pub fn handler(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
     user_entry.balance = user_entry.balance.checked_add(amount).unwrap();
     msg!("User entry balance: {}", user_entry.balance);
     user_entry.last_staked = Clock::get().unwrap().unix_timestamp;
-    // will this be the most up to date?
     user_entry.initial_reward_ratio = pool.current_reward_ratio;
+    user_entry.initial_burn_ratio = pool.current_burn_ratio;
 
     Ok(())
 }
