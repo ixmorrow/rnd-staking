@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { HedgeTakeHome } from "../target/types/hedge_take_home"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount, getOrCreateAssociatedTokenAccount, burn } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount, getOrCreateAssociatedTokenAccount, burn, amountToUiAmount } from '@solana/spl-token'
 import { delay, initializeTestUsers, safeAirdrop } from './utils/util'
 import { userKeypair1, userKeypair2, userKeypair3, programAuthority } from './testKeypairs/testKeypairs'
 import { assert } from "chai"
@@ -370,16 +370,16 @@ describe("hedge-take-home", async () => {
     const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair1.publicKey)
 
     let userTokenAcct = await getAccount(provider.connection, userAta)
-    let initialUserBalance = userTokenAcct.amount
+    let initialUserBalance = Number(userTokenAcct.amount)
 
     let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    let initialVaultBalance = stakeVaultAcct.amount
+    let initialVaultBalance = Number(stakeVaultAcct.amount)
 
     let poolAcct = await program.account.poolState.fetch(pool)
-    let initialPoolAmt = poolAcct.amount
+    let initialPoolAmt = Number(poolAcct.amount)
 
     let userEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
-    let initialEntryBalance = userEntryAcct.balance
+    let initialEntryBalance = Number(userEntryAcct.balance)
 
     await program.methods.unstake()
     .accounts({
@@ -398,14 +398,20 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    //assert(userTokenAcct.amount == initialUserBalance + initialEntryBalance.toNumber())
-    //assert(stakeVaultAcct.amount == initialVaultBalance - initialEntryBalance.toNumber())
+    const rewardRate = (poolAcct.currentRewardRatio.toNumber() - userEntryAcct.initialRewardRatio.toNumber()) / LAMPORTS_PER_SOL
+    const burnRate = (poolAcct.currentBurnRatio.toNumber() - userEntryAcct.initialBurnRatio.toNumber()) / LAMPORTS_PER_SOL
+    let amtAfterRewards = initialEntryBalance + (initialEntryBalance*rewardRate)
+    let expectedAmt = amtAfterRewards - (amtAfterRewards*burnRate)
+    console.log("Expected amount: ", expectedAmt)
+
+    assert(Number(userTokenAcct.amount) == initialUserBalance + expectedAmt)
+    assert(Number(stakeVaultAcct.amount) == initialVaultBalance - expectedAmt)
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
     assert(updatedUserEntryAcct.balance.toNumber() == 0)
 
-    // poolAcct = await program.account.poolState.fetch(pool)
-    // assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() - initialEntryBalance.toNumber())
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt - expectedAmt)
   })
 
   it('User 2 adds to staking position', async () => {

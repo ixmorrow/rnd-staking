@@ -1,7 +1,9 @@
 ## Reward Distribution Program
-This repo contains a staking contract that allows users to stake their 'RND' tokens in a pool. An authorized user can mint more RND tokens to the pool that is distributed pro rata to all stakers according to their stake weight. The authorized user is also able to burn RND tokens from the pool, taking tokens away from each staker pro rata. 
+This repo contains a staking contract that allows users to stake their `RND` tokens in a pool. An authorized user can mint more `RND` tokens to the pool that is distributed pro rata to all stakers according to their stake weight. The authorized user is also able to burn `RND` tokens from the pool, taking tokens away from each staker pro rata. 
 
 The program makes use of a pull based system where each user's total rewards gained and tokens burned are derived once the user issues an instruction to unstake their tokens.
+
+All token amounts in the program are referenced in Lamports terms (10e9). This allows for greater precision in all of the calculations.
 
 | Cluster | Address |
 | --- | --- |
