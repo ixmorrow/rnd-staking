@@ -237,7 +237,7 @@ describe("hedge-take-home", async () => {
     let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
     let initialEntryBalance = userEntryAcct.balance
 
-    await program.methods.stake(new BN(100 * LAMPORTS_PER_SOL))
+    await program.methods.stake(new BN(400 * LAMPORTS_PER_SOL))
     .accounts({
       pool: pool,
       tokenVault: stakeVault,
@@ -252,14 +252,14 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(userTokenAcct.amount == initialUserBalance - BigInt(100*LAMPORTS_PER_SOL))
-    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(100*LAMPORTS_PER_SOL))
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(400*LAMPORTS_PER_SOL))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(400*LAMPORTS_PER_SOL))
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
-    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (100*LAMPORTS_PER_SOL))
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (400*LAMPORTS_PER_SOL))
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (100*LAMPORTS_PER_SOL))
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (400*LAMPORTS_PER_SOL))
     assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
     assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
   })
@@ -271,7 +271,7 @@ describe("hedge-take-home", async () => {
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
 
-    await program.methods.distribute(new BN(100 * LAMPORTS_PER_SOL))
+    await program.methods.distribute(new BN(250 * LAMPORTS_PER_SOL))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
@@ -284,14 +284,56 @@ describe("hedge-take-home", async () => {
     .rpc()
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.amount.toNumber() == initialStakeAmt.toNumber() + (100*LAMPORTS_PER_SOL))
+    assert(poolAcct.amount.toNumber() == initialStakeAmt.toNumber() + (250*LAMPORTS_PER_SOL))
     
     vaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(vaultAcct.amount == initialVaultAmt + BigInt(100*LAMPORTS_PER_SOL))
+    assert(vaultAcct.amount == initialVaultAmt + BigInt(250*LAMPORTS_PER_SOL))
 
-    let rewardRate = (100*LAMPORTS_PER_SOL)/initialStakeAmt.toNumber()
+    let rewardRate = (250*LAMPORTS_PER_SOL)/initialStakeAmt.toNumber()
     console.log("Derived reward Rate: ", rewardRate)
     assert(poolAcct.currentRewardRatio.toNumber()/LAMPORTS_PER_SOL == rewardRate)
+  })
+
+  it('User 3 stakes RND', async () => {
+    const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair3.publicKey)
+
+    let userTokenAcct = await getAccount(provider.connection, userAta)
+    let initialUserBalance = userTokenAcct.amount
+
+    let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    let initialVaultBalance = stakeVaultAcct.amount
+
+    let poolAcct = await program.account.poolState.fetch(pool)
+    let initialPoolAmt = poolAcct.amount
+
+    let userEntryAcct = await program.account.stakeEntry.fetch(user3StakeEntry)
+    let initialEntryBalance = userEntryAcct.balance
+
+    await program.methods.stake(new BN(250 * LAMPORTS_PER_SOL))
+    .accounts({
+      pool: pool,
+      tokenVault: stakeVault,
+      user: userKeypair3.publicKey,
+      userStakeEntry: user3StakeEntry,
+      userTokenAccount: userAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([userKeypair3])
+    .rpc()
+
+    userTokenAcct = await getAccount(provider.connection, userAta)
+    stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(250*LAMPORTS_PER_SOL))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(250*LAMPORTS_PER_SOL))
+
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user3StakeEntry)
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (250*LAMPORTS_PER_SOL))
+
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (250*LAMPORTS_PER_SOL))
+    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
+    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
   })
 
   it('Permissioned RND reward burn', async () => {
@@ -301,7 +343,7 @@ describe("hedge-take-home", async () => {
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
 
-    await program.methods.burn(new BN(3*LAMPORTS_PER_SOL))
+    await program.methods.burn(new BN(20*LAMPORTS_PER_SOL))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
@@ -314,15 +356,14 @@ describe("hedge-take-home", async () => {
     .rpc()
 
     poolAcct = await program.account.poolState.fetch(pool)
-    assert(poolAcct.amount.toNumber() == initialStakeAmt.toNumber() - (3*LAMPORTS_PER_SOL))
+    assert(poolAcct.amount.toNumber() == initialStakeAmt.toNumber() - (20*LAMPORTS_PER_SOL))
     
     vaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(vaultAcct.amount == initialVaultAmt - BigInt(3*LAMPORTS_PER_SOL))
+    assert(vaultAcct.amount == initialVaultAmt - BigInt(20*LAMPORTS_PER_SOL))
 
-    let burnRate = (3*LAMPORTS_PER_SOL)/initialStakeAmt.toNumber()
+    let burnRate = (20*LAMPORTS_PER_SOL)/initialStakeAmt.toNumber()
     console.log("Derived burn rate: ", burnRate)
     assert(poolAcct.currentBurnRatio.toNumber()/LAMPORTS_PER_SOL == burnRate)
-
   })
 
   it('User 1 unstakes RND', async () => {
@@ -365,5 +406,49 @@ describe("hedge-take-home", async () => {
 
     // poolAcct = await program.account.poolState.fetch(pool)
     // assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() - initialEntryBalance.toNumber())
+  })
+
+  it('User 2 adds to staking position', async () => {
+    const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair2.publicKey)
+
+    let userTokenAcct = await getAccount(provider.connection, userAta)
+    let initialUserBalance = userTokenAcct.amount
+
+    let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    let initialVaultBalance = stakeVaultAcct.amount
+
+    let poolAcct = await program.account.poolState.fetch(pool)
+    let initialPoolAmt = poolAcct.amount
+
+    let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    let initialEntryBalance = userEntryAcct.balance
+
+    await program.methods.stake(new BN(25 * LAMPORTS_PER_SOL))
+    .accounts({
+      pool: pool,
+      tokenVault: stakeVault,
+      user: userKeypair2.publicKey,
+      userStakeEntry: user2StakeEntry,
+      userTokenAccount: userAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([userKeypair2])
+    .rpc()
+
+    userTokenAcct = await getAccount(provider.connection, userAta)
+    stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(25*LAMPORTS_PER_SOL))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(25*LAMPORTS_PER_SOL))
+
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (25*LAMPORTS_PER_SOL))
+
+    poolAcct = await program.account.poolState.fetch(pool)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (25*LAMPORTS_PER_SOL))
+    assert(poolAcct.currentRewardRatio.toNumber() != updatedUserEntryAcct.initialRewardRatio.toNumber())
+    assert(poolAcct.currentBurnRatio.toNumber() != updatedUserEntryAcct.initialBurnRatio.toNumber())
+    assert(userEntryAcct.initialRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
+    assert(userEntryAcct.initialBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
   })
 })
