@@ -7,31 +7,8 @@ use {
 };
 
 pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
-    // calculate difference between current reward rate and rate when initially staked
-    let reward_rate: u128 = ctx.accounts.pool.current_reward_ratio
-        .checked_sub(ctx.accounts.user_stake_entry.initial_reward_ratio).unwrap();
-
-    // calculate difference between current burn rate and rate when initially staked
-    let burn_rate: u128 = ctx.accounts.pool.current_burn_ratio
-        .checked_sub(ctx.accounts.user_stake_entry.initial_burn_ratio).unwrap();
-
-    msg!("User staked amount: {}", ctx.accounts.user_stake_entry.balance);
-    let amount = ctx.accounts.user_stake_entry.balance;
-
-    msg!("Burn rate: {}", burn_rate);
-    // calculate amount burned over stake period and subtract from out_amount
-    let mut out_amount: u128 = (amount as u128).checked_sub((amount as u128).checked_mul(burn_rate).unwrap()
-        .checked_div(MULT).unwrap()
-        .try_into().unwrap()).unwrap();
-    msg!("Amount after burn applied: {}", out_amount);
-
-    msg!("Reward rate: {}", reward_rate);
-    // calculate rewards accrued over stake period and add to out_amount
-    out_amount = (out_amount).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
-        .checked_div(MULT).unwrap()
-        .try_into().unwrap()).unwrap();
-    msg!("Amount after reward distribution: {}", out_amount);
-
+    // calculate amount of tokens user is owed after rewards/burns are taken into account
+    let out_amount: u128 = calculate_out_amount(&ctx.accounts.pool, &ctx.accounts.user_stake_entry);
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool.vault_auth_bump;
@@ -68,7 +45,7 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
      // subtract out_amount from pool total
     pool.amount = pool.amount.checked_sub(out_amount.try_into().unwrap()).unwrap();
     // subtract amount user had staked originally, not the amount they are receiving after rewards/burn
-    pool.user_deposit_amt = pool.user_deposit_amt.checked_sub(amount).unwrap();
+    pool.user_deposit_amt = pool.user_deposit_amt.checked_sub(user_entry.balance).unwrap();
     msg!("Total staked after withdrawal: {}", pool.amount);
     msg!("Amount deposited by users: {}", pool.user_deposit_amt);
 
