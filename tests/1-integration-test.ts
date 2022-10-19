@@ -398,51 +398,51 @@ describe("hedge-take-home", async () => {
     assert(poolAcct.amount.toNumber() == initialPoolAmt - expectedAmt)
   })
 
-  // it('User 2 adds to staking position', async () => {
-  //   const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair2.publicKey)
+  it('User 2 adds to staking position', async () => {
+    const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair2.publicKey)
 
-  //   let userTokenAcct = await getAccount(provider.connection, userAta)
-  //   let initialUserBalance = userTokenAcct.amount
+    let userTokenAcct = await getAccount(provider.connection, userAta)
+    let initialUserBalance = userTokenAcct.amount
 
-  //   let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-  //   let initialVaultBalance = stakeVaultAcct.amount
+    let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    let initialVaultBalance = stakeVaultAcct.amount
 
-  //   let poolAcct = await program.account.poolState.fetch(pool)
-  //   let initialPoolAmt = poolAcct.amount
+    let poolAcct = await program.account.poolState.fetch(pool)
+    let initialPoolAmt = poolAcct.amount
 
-  //   let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
-  //   let initialEntryBalance = userEntryAcct.balance
+    let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    let initialEntryBalance = userEntryAcct.balance
 
-  //   await program.methods.stake(new BN(25 * LAMPORTS_PER_SOL))
-  //   .accounts({
-  //     pool: pool,
-  //     tokenVault: stakeVault,
-  //     user: userKeypair2.publicKey,
-  //     userStakeEntry: user2StakeEntry,
-  //     userTokenAccount: userAta,
-  //     tokenProgram: TOKEN_PROGRAM_ID,
-  //     systemProgram: SystemProgram.programId
-  //   })
-  //   .signers([userKeypair2])
-  //   .rpc()
+    await program.methods.stake(new BN(15 * LAMPORTS_PER_SOL))
+    .accounts({
+      pool: pool,
+      tokenVault: stakeVault,
+      user: userKeypair2.publicKey,
+      userStakeEntry: user2StakeEntry,
+      userTokenAccount: userAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([userKeypair2])
+    .rpc()
 
-  //   userTokenAcct = await getAccount(provider.connection, userAta)
-  //   stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-  //   assert(userTokenAcct.amount == initialUserBalance - BigInt(25*LAMPORTS_PER_SOL))
-  //   assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(25*LAMPORTS_PER_SOL))
-  //   console.log("Total staked in vault: ", stakeVaultAcct.amount)
+    userTokenAcct = await getAccount(provider.connection, userAta)
+    stakeVaultAcct = await getAccount(provider.connection, stakeVault)
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(15*LAMPORTS_PER_SOL))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(15*LAMPORTS_PER_SOL))
+    console.log("Total staked in vault: ", stakeVaultAcct.amount)
 
-  //   let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
-  //   assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (25*LAMPORTS_PER_SOL))
+    let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
+    // assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (15*LAMPORTS_PER_SOL))
 
-  //   poolAcct = await program.account.poolState.fetch(pool)
-  //   assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (25*LAMPORTS_PER_SOL))
-  //   assert(poolAcct.currentRewardRatio.toNumber() != updatedUserEntryAcct.initialRewardRatio.toNumber())
-  //   assert(poolAcct.currentBurnRatio.toNumber() != updatedUserEntryAcct.initialBurnRatio.toNumber())
-  //   assert(userEntryAcct.initialRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-  //   assert(userEntryAcct.initialBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
-  //   console.log("Total in pool state: ", poolAcct.amount.toNumber())
-  // })
+    poolAcct = await program.account.poolState.fetch(pool)
+    // assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (25*LAMPORTS_PER_SOL))
+    // assert(poolAcct.currentRewardRatio.toNumber() != updatedUserEntryAcct.initialRewardRatio.toNumber())
+    // assert(poolAcct.currentBurnRatio.toNumber() != updatedUserEntryAcct.initialBurnRatio.toNumber())
+    // assert(userEntryAcct.initialRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
+    // assert(userEntryAcct.initialBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+    console.log("Total in pool state: ", poolAcct.amount.toNumber())
+  })
 
   it('Permissioned RND distribution', async () => {
     let poolAcct = await program.account.poolState.fetch(pool)
