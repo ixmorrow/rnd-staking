@@ -48,27 +48,37 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
     // calculate difference between current reward rate and rate when initially staked
     let reward_rate: u128 = pool_state.current_reward_ratio
         .checked_sub(user_stake_entry.initial_reward_ratio).unwrap();
+    msg!("Reward rate: {}", reward_rate);
 
     // calculate difference between current burn rate and rate when initially staked
     let burn_rate: u128 = pool_state.current_burn_ratio
         .checked_sub(user_stake_entry.initial_burn_ratio).unwrap();
+    msg!("Burn rate: {}", burn_rate);
+
+    // let mut cumulative_rate: u128 = 0;
+    // if reward_rate > burn_rate {
+    //     cumulative_rate = reward_rate - burn_rate;
+    // } else {
+    //     cumulative_rate = burn_rate - reward_rate;
+    // }
+    // msg!("Cumulatice rate: {}", cumulative_rate);
 
     msg!("User staked amount: {}", user_stake_entry.balance);
     let amount = user_stake_entry.balance;
 
-    msg!("Burn rate: {}", burn_rate);
     // calculate amount burned over stake period and subtract from out_amount
-    let mut out_amount: u128 = (amount as u128).checked_sub((amount as u128).checked_mul(burn_rate).unwrap()
-        .checked_div(MULT).unwrap()
-        .try_into().unwrap()).unwrap();
+    let amount_in_lamports = (amount as u128).checked_mul(MULT).unwrap();
+    let mut out_amount: u128 = (amount_in_lamports).checked_sub((amount as u128).checked_mul(burn_rate).unwrap()).unwrap();
     msg!("Amount after burn applied: {}", out_amount);
 
-    msg!("Reward rate: {}", reward_rate);
     // calculate rewards accrued over stake period and add to out_amount
-    out_amount = (out_amount).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
-        .checked_div(MULT).unwrap()
-        .try_into().unwrap()).unwrap();
+    out_amount = (out_amount).checked_add((amount as u128).checked_mul(reward_rate).unwrap()).unwrap()
+        .checked_div(MULT).unwrap();
     msg!("Amount after reward distribution: {}", out_amount);
+
+    // let out_amount: u128 = (amount_in_lamports).checked_add((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
+    //     .checked_div(MULT).unwrap();
+    // msg!("Amount after cumulative rate: {}", out_amount);
 
     out_amount
 }
