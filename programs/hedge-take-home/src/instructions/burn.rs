@@ -23,7 +23,7 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     if pool_state.amount != 0 {
         // calculate new burn rate
         pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_add((amount as u128).checked_mul(MULT).unwrap()
-        .checked_div(pool_state.amount as u128).unwrap()
+        .checked_div(pool_state.user_deposit_amt as u128).unwrap()
         .try_into().unwrap()).unwrap();      
     }
 
@@ -31,6 +31,7 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     pool_state.amount = pool_state.amount.checked_sub(amount).unwrap();
 
     msg!("Current total staked: {}", pool_state.amount);
+    msg!("Amount deposited by Users: {}", pool_state.user_deposit_amt);
     msg!("Current burn rate: {}", pool_state.current_burn_ratio);
 
     Ok(())

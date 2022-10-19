@@ -22,7 +22,9 @@ pub fn handler(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
 
     // update pool state amount
     pool.amount = pool.amount.checked_add(amount).unwrap();
+    pool.user_deposit_amt = pool.user_deposit_amt.checked_add(amount).unwrap();
     msg!("Current pool total: {}", pool.amount);
+    msg!("Amount of tokens deposited by users: {}", pool.user_deposit_amt);
 
     // update user stake entry
     user_entry.balance = user_entry.balance.checked_add(amount).unwrap();

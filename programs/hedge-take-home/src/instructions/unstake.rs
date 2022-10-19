@@ -18,19 +18,19 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     msg!("User staked amount: {}", ctx.accounts.user_stake_entry.balance);
     let amount = ctx.accounts.user_stake_entry.balance;
 
-    msg!("Reward rate: {}", reward_rate);
-    // calculate rewards accrued over stake period and add to out_amount
-    let mut out_amount: u128 = (amount as u128).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
-        .checked_div(MULT).unwrap()
-        .try_into().unwrap()).unwrap();
-    msg!("Amount after reward distribution: {}", out_amount);
-
     msg!("Burn rate: {}", burn_rate);
     // calculate amount burned over stake period and subtract from out_amount
-    out_amount = out_amount.checked_sub((out_amount as u128).checked_mul(burn_rate).unwrap()
+    let mut out_amount: u128 = (amount as u128).checked_sub((amount as u128).checked_mul(burn_rate).unwrap()
         .checked_div(MULT).unwrap()
         .try_into().unwrap()).unwrap();
     msg!("Amount after burn applied: {}", out_amount);
+
+    msg!("Reward rate: {}", reward_rate);
+    // calculate rewards accrued over stake period and add to out_amount
+    out_amount = (out_amount).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
+        .checked_div(MULT).unwrap()
+        .try_into().unwrap()).unwrap();
+    msg!("Amount after reward distribution: {}", out_amount);
 
 
     // program signer seeds
@@ -67,7 +67,10 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
 
      // subtract out_amount from pool total
     pool.amount = pool.amount.checked_sub(out_amount.try_into().unwrap()).unwrap();
+    // subtract amount user had staked originally, not the amount they are receiving after rewards/burn
+    pool.user_deposit_amt = pool.user_deposit_amt.checked_sub(amount).unwrap();
     msg!("Total staked after withdrawal: {}", pool.amount);
+    msg!("Amount deposited by users: {}", pool.user_deposit_amt);
 
     // update user stake entry
     user_entry.balance = 0;

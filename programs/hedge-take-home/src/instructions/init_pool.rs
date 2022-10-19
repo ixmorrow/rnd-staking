@@ -11,6 +11,7 @@ pub fn handler(ctx: Context<InitializePool>) -> Result<()> {
     pool_state.authority = ctx.accounts.program_authority.key();
     pool_state.bump = *ctx.bumps.get("pool_state").unwrap();
     pool_state.amount = 0;
+    pool_state.user_deposit_amt = 0;
     pool_state.token_vault = ctx.accounts.token_vault.key();
     pool_state.token_mint = ctx.accounts.token_mint.key();
     pool_state.initialized_at = Clock::get().unwrap().unix_timestamp;

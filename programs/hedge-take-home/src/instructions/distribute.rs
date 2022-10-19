@@ -19,16 +19,19 @@ pub fn handler(ctx: Context<DistributeCtx>, amount: u64) -> Result<()> {
     if pool_state.amount != 0 {
         // calculate new reward rate
         pool_state.current_reward_ratio = pool_state.current_reward_ratio.checked_add((amount as u128).checked_mul(MULT).unwrap()
-        .checked_div(pool_state.amount as u128).unwrap()
+        .checked_div(pool_state.user_deposit_amt as u128).unwrap()
         .try_into().unwrap()).unwrap();      
 
         msg!("Rewards to distribute: {}", amount);
         msg!("Total staked: {}", pool_state.amount);
+        msg!("User deposits: {}", pool_state.user_deposit_amt);
         msg!("Reward rate: {}", pool_state.current_reward_ratio);
     }
 
     // update pool amount
     pool_state.amount = pool_state.amount.checked_add(amount).unwrap();
+
+    msg!("Total staked after distribution: {}", pool_state.amount);
 
     Ok(())
 }
