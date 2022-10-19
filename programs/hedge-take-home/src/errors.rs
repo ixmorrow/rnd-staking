@@ -12,4 +12,6 @@ pub enum StakeError {
     InvalidProgramAuthority,
     #[msg("Attempted to withdraw more RND rewards than are available")]
     OverdrawError,
+    #[msg("Invalid user provided")]
+    InvalidUser
 }

@@ -46,7 +46,11 @@ pub struct StakeCtx <'info> {
         bump = pool.vault_bump
     )]
     pub token_vault: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = user.key() == user_stake_entry.user
+        @ StakeError::InvalidUser
+    )]
     pub user: Signer<'info>,
     #[account(
         mut,
