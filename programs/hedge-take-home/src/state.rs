@@ -55,30 +55,25 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
         .checked_sub(user_stake_entry.initial_burn_ratio).unwrap();
     msg!("Burn rate: {}", burn_rate);
 
-    // let mut cumulative_rate: u128 = 0;
-    // if reward_rate > burn_rate {
-    //     cumulative_rate = reward_rate - burn_rate;
-    // } else {
-    //     cumulative_rate = burn_rate - reward_rate;
-    // }
-    // msg!("Cumulatice rate: {}", cumulative_rate);
-
     msg!("User staked amount: {}", user_stake_entry.balance);
     let amount = user_stake_entry.balance;
-
-    // calculate amount burned over stake period and subtract from out_amount
+    let mut cumulative_rate: u128 = 0;
+    let mut out_amount: u128 = 0;
     let amount_in_lamports = (amount as u128).checked_mul(MULT).unwrap();
-    let mut out_amount: u128 = (amount_in_lamports).checked_sub((amount as u128).checked_mul(burn_rate).unwrap()).unwrap();
-    msg!("Amount after burn applied: {}", out_amount);
 
-    // calculate rewards accrued over stake period and add to out_amount
-    out_amount = (out_amount).checked_add((amount as u128).checked_mul(reward_rate).unwrap()).unwrap()
-        .checked_div(MULT).unwrap();
-    msg!("Amount after reward distribution: {}", out_amount);
-
-    // let out_amount: u128 = (amount_in_lamports).checked_add((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
-    //     .checked_div(MULT).unwrap();
-    // msg!("Amount after cumulative rate: {}", out_amount);
+    // use the difference between the two rates
+    if reward_rate > burn_rate {
+        cumulative_rate = reward_rate - burn_rate;
+        out_amount = (amount_in_lamports).checked_add((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
+            .checked_div(MULT).unwrap();
+        msg!("Amount after cumulative rate: {}", out_amount);
+    } else {
+        cumulative_rate = burn_rate - reward_rate;
+        out_amount = (amount_in_lamports).checked_sub((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
+            .checked_div(MULT).unwrap();
+        msg!("Amount after cumulative rate: {}", out_amount);
+    }
+    msg!("Cumulative rate: {}", cumulative_rate);
 
     out_amount
 }
