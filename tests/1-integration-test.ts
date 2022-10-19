@@ -410,9 +410,6 @@ describe("hedge-take-home", async () => {
     let poolAcct = await program.account.poolState.fetch(pool)
     let initialPoolAmt = poolAcct.amount
 
-    let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
-    let initialEntryBalance = userEntryAcct.balance
-
     await program.methods.stake(new BN(15 * MULT))
     .accounts({
       pool: pool,
@@ -430,17 +427,14 @@ describe("hedge-take-home", async () => {
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
     assert(userTokenAcct.amount == initialUserBalance - BigInt(15*MULT))
     assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(15*MULT))
-    console.log("Total staked in vault: ", stakeVaultAcct.amount)
+    console.log("Total staked in vault: ", Number(stakeVaultAcct.amount))
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
-    // assert(updatedUserEntryAcct.balance.toNumber() == initialEntryBalance.toNumber() + (15*LAMPORTS_PER_SOL))
-
     poolAcct = await program.account.poolState.fetch(pool)
-    // assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (25*LAMPORTS_PER_SOL))
-    // assert(poolAcct.currentRewardRatio.toNumber() != updatedUserEntryAcct.initialRewardRatio.toNumber())
-    // assert(poolAcct.currentBurnRatio.toNumber() != updatedUserEntryAcct.initialBurnRatio.toNumber())
-    // assert(userEntryAcct.initialRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-    // assert(userEntryAcct.initialBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (15*MULT))
+    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
+    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
     console.log("Total in pool state: ", poolAcct.amount.toNumber())
   })
 
@@ -475,7 +469,6 @@ describe("hedge-take-home", async () => {
     let userTokenAcct = await getAccount(provider.connection, userAta)
     let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
     let poolAcct = await program.account.poolState.fetch(pool)
-    let userEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
 
     await program.methods.unstake()
     .accounts({
@@ -494,8 +487,6 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    const rewardRate = (poolAcct.currentRewardRatio.toNumber() - userEntryAcct.initialRewardRatio.toNumber()) / MULT
-    const burnRate = (poolAcct.currentBurnRatio.toNumber() - userEntryAcct.initialBurnRatio.toNumber()) / MULT
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
     assert(updatedUserEntryAcct.balance.toNumber() == 0)
@@ -507,17 +498,8 @@ describe("hedge-take-home", async () => {
   it('User 3 unstakes RND, pool should be empty', async () => {
     const userAta = await getAssociatedTokenAddress(tokenMint, userKeypair3.publicKey)
 
-    let userTokenAcct = await getAccount(provider.connection, userAta)
-    let initialUserBalance = Number(userTokenAcct.amount)
-
     let stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    let initialVaultBalance = Number(stakeVaultAcct.amount)
-
     let poolAcct = await program.account.poolState.fetch(pool)
-    let initialPoolAmt = Number(poolAcct.amount)
-
-    let userEntryAcct = await program.account.stakeEntry.fetch(user3StakeEntry)
-    let initialEntryBalance = Number(userEntryAcct.balance)
 
     await program.methods.unstake()
     .accounts({

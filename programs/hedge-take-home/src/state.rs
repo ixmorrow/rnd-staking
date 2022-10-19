@@ -57,8 +57,8 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
 
     msg!("User staked amount: {}", user_stake_entry.balance);
     let amount = user_stake_entry.balance;
-    let mut cumulative_rate: u128 = 0;
-    let mut out_amount: u128 = 0;
+    let cumulative_rate: u128;
+    let out_amount: u128;
     let amount_in_lamports = (amount as u128).checked_mul(MULT).unwrap();
 
     // use the difference between the two rates
@@ -66,14 +66,13 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
         cumulative_rate = reward_rate - burn_rate;
         out_amount = (amount_in_lamports).checked_add((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
             .checked_div(MULT).unwrap();
-        msg!("Amount after cumulative rate: {}", out_amount);
     } else {
         cumulative_rate = burn_rate - reward_rate;
         out_amount = (amount_in_lamports).checked_sub((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
             .checked_div(MULT).unwrap();
-        msg!("Amount after cumulative rate: {}", out_amount);
     }
     msg!("Cumulative rate: {}", cumulative_rate);
+    msg!("Amount after cumulative rate: {}", out_amount);
 
     out_amount
 }

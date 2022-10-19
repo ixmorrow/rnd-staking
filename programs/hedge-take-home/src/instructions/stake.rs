@@ -4,7 +4,7 @@ use {
     anchor_spl::{token::{TokenAccount, Token, Transfer, transfer}},
 };
 
-pub fn handler(ctx: Context<StakeCtx>, mut stake_amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
     // transfer amount from user token acct to vault
     transfer(ctx.accounts.transfer_ctx(), stake_amount)?;
 
