@@ -7,9 +7,11 @@ use {
 };
 
 pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
+    // calculate difference between current reward rate and rate when initially staked
     let reward_rate: u128 = ctx.accounts.pool.current_reward_ratio
         .checked_sub(ctx.accounts.user_stake_entry.initial_reward_ratio).unwrap();
 
+    // calculate difference between current burn rate and rate when initially staked
     let burn_rate: u128 = ctx.accounts.pool.current_burn_ratio
         .checked_sub(ctx.accounts.user_stake_entry.initial_burn_ratio).unwrap();
 
@@ -17,14 +19,14 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     let amount = ctx.accounts.user_stake_entry.balance;
 
     msg!("Reward rate: {}", reward_rate);
-    // calculate reward amount accrued
+    // calculate rewards accrued over stake period and add to out_amount
     let mut out_amount: u128 = (amount as u128).checked_add((amount as u128).checked_mul(reward_rate).unwrap()
         .checked_div(MULT).unwrap()
         .try_into().unwrap()).unwrap();
     msg!("Amount after reward distribution: {}", out_amount);
 
     msg!("Burn rate: {}", burn_rate);
-    // calculate amount burned
+    // calculate amount burned over stake period and subtract from out_amount
     out_amount = out_amount.checked_sub((out_amount as u128).checked_mul(burn_rate).unwrap()
         .checked_div(MULT).unwrap()
         .try_into().unwrap()).unwrap();
@@ -36,6 +38,7 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     let auth_seeds = &[VAULT_AUTH_SEED.as_bytes(), &[auth_bump]];
     let signer = &[&auth_seeds[..]];
 
+    // transfer out_amount from stake vault to user
     let transfer_ix = transfer_checked(
         &ctx.accounts.token_program.key(),
         &ctx.accounts.token_vault.key(),
@@ -62,7 +65,7 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     let user_entry = &mut ctx.accounts.user_stake_entry;
 
-     // update pool state amount
+     // subtract out_amount from pool total
     pool.amount = pool.amount.checked_sub(out_amount.try_into().unwrap()).unwrap();
     msg!("Total staked after withdrawal: {}", pool.amount);
 

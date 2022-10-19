@@ -4,6 +4,8 @@ use {
 };
 
 pub fn handler(ctx: Context<InitEntryCtx>) -> Result<()> {
+
+    // initialize user stake entry state
     let user_entry = &mut ctx.accounts.user_stake_entry;
     user_entry.user = ctx.accounts.user.key();
     user_entry.bump = *ctx.bumps.get("user_stake_entry").unwrap();

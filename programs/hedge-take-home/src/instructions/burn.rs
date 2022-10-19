@@ -21,6 +21,7 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     msg!("Initial burn ratio: {}", pool_state.current_burn_ratio);
 
     if pool_state.amount != 0 {
+        // calculate new burn rate
         pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_add((amount as u128).checked_mul(MULT).unwrap()
         .checked_div(pool_state.amount as u128).unwrap()
         .try_into().unwrap()).unwrap();      
