@@ -29,7 +29,6 @@ pub fn handler(ctx: Context<DistributeCtx>, amount: u64) -> Result<()> {
 
     // update pool amount
     pool_state.amount = pool_state.amount.checked_add(amount).unwrap();
-
     msg!("Total staked after distribution: {}", pool_state.amount);
 
     Ok(())

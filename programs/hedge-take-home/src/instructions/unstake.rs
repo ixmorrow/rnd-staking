@@ -42,7 +42,7 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     let user_entry = &mut ctx.accounts.user_stake_entry;
 
-     // subtract out_amount from pool total
+    // subtract out_amount from pool total
     pool.amount = pool.amount.checked_sub(out_amount.try_into().unwrap()).unwrap();
     // subtract amount user had staked originally, not the amount they are receiving after rewards/burn
     pool.user_deposit_amt = pool.user_deposit_amt.checked_sub(user_entry.balance).unwrap();

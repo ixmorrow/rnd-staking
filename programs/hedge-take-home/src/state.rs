@@ -14,8 +14,6 @@ pub const STAKE_ENTRY_SIZE: usize = 8 + 32 + 1 + 8 + 8 + 16 + 16;
 
 pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("9MNHTJJ1wd6uQrZfXk46T24qcWNZYpYfwZKk6zho4poV");
 
-pub const TREASURY_SEED: &str = "treasury";
-
 pub const MULT: u128 = 1_000_000_000;
 
 #[account]
@@ -59,17 +57,18 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
     let amount = user_stake_entry.balance;
     let cumulative_rate: u128;
     let out_amount: u128;
-    let amount_in_lamports = (amount as u128).checked_mul(MULT).unwrap();
 
     // use the difference between the two rates
     if reward_rate > burn_rate {
         cumulative_rate = reward_rate - burn_rate;
-        out_amount = (amount_in_lamports).checked_add((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
-            .checked_div(MULT).unwrap();
+        out_amount = (amount as u128).checked_add(
+            ((amount as u128).checked_mul(cumulative_rate).unwrap()).checked_div(MULT).unwrap()
+        ).unwrap();
     } else {
         cumulative_rate = burn_rate - reward_rate;
-        out_amount = (amount_in_lamports).checked_sub((amount as u128).checked_mul(cumulative_rate).unwrap()).unwrap()
-            .checked_div(MULT).unwrap();
+        out_amount = (amount as u128).checked_sub(
+            ((amount as u128).checked_mul(cumulative_rate).unwrap()).checked_div(MULT).unwrap()
+        ).unwrap();
     }
     msg!("Cumulative rate: {}", cumulative_rate);
     msg!("Amount after cumulative rate: {}", out_amount);
