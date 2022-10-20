@@ -256,7 +256,7 @@ describe("hedge-take-home", async () => {
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
 
-    await program.methods.distribute(new BN(30 * MULT))
+    await program.methods.distribute(new BN(30*MULT))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
@@ -410,7 +410,7 @@ describe("hedge-take-home", async () => {
     let poolAcct = await program.account.poolState.fetch(pool)
     let initialPoolAmt = poolAcct.amount
 
-    await program.methods.stake(new BN(15 * MULT))
+    await program.methods.stake(new BN(15*MULT))
     .accounts({
       pool: pool,
       tokenVault: stakeVault,
@@ -445,7 +445,7 @@ describe("hedge-take-home", async () => {
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
 
-    await program.methods.distribute(new BN(15 * MULT))
+    await program.methods.distribute(new BN(15*MULT))
     .accounts({
       programAuthority: programAuthority.publicKey,
       poolState: pool,
