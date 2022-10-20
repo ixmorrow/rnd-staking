@@ -3,8 +3,6 @@ This repo contains a staking contract that allows users to stake their `RND` tok
 
 The program makes use of a pull based system where each user's total rewards gained and tokens burned are derived once the user issues an instruction to unstake their tokens.
 
-All token amounts in the program are referenced in Lamports terms (10e9). This allows for greater precision in all of the calculations.
-
 | Cluster | Address |
 | --- | --- |
 | `Devnet` | [4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa](https://explorer.solana.com/address/4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa?cluster=devnet) |
