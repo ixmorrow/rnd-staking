@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { HedgeTakeHome } from "../target/types/hedge_take_home"
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
 import { delay, initializeTestUsers, safeAirdrop, MULT } from './utils/util'
 import { userKeypair1, userKeypair2, userKeypair3, programAuthority } from './testKeypairs/testKeypairs'
@@ -38,7 +38,7 @@ describe("hedge-take-home", async () => {
       programAuthority,
       programAuthority.publicKey,
       programAuthority.publicKey,
-      9,
+      4,
     )
 
     // mint RND to test users
@@ -276,7 +276,7 @@ describe("hedge-take-home", async () => {
 
     let rewardRate = (30*MULT)/initialStakeAmt.toNumber()
     console.log("Derived reward Rate: ", rewardRate)
-    assert(poolAcct.currentRewardRatio.toNumber()/MULT == rewardRate)
+    assert(poolAcct.currentRewardRatio.toNumber()/LAMPORTS_PER_SOL == rewardRate)
   })
 
   it('User 3 stakes RND', async () => {
@@ -348,7 +348,7 @@ describe("hedge-take-home", async () => {
 
     let burnRate = (20*MULT)/poolAcct.userDepositAmt.toNumber()
     console.log("Derived burn rate: ", burnRate)
-    assert(poolAcct.currentBurnRatio.toNumber()/MULT == burnRate)
+    assert(poolAcct.currentBurnRatio.toNumber()/LAMPORTS_PER_SOL == burnRate)
   })
 
   it('User 1 unstakes RND', async () => {
@@ -383,8 +383,8 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    const rewardRate = (poolAcct.currentRewardRatio.toNumber() - userEntryAcct.initialRewardRatio.toNumber()) / MULT
-    const burnRate = (poolAcct.currentBurnRatio.toNumber() - userEntryAcct.initialBurnRatio.toNumber()) / MULT
+    const rewardRate = (poolAcct.currentRewardRatio.toNumber() - userEntryAcct.initialRewardRatio.toNumber()) / LAMPORTS_PER_SOL
+    const burnRate = (poolAcct.currentBurnRatio.toNumber() - userEntryAcct.initialBurnRatio.toNumber()) / LAMPORTS_PER_SOL
     let amtAfterRewards = initialEntryBalance + (initialEntryBalance*rewardRate)
     let expectedAmt = amtAfterRewards - (initialEntryBalance*burnRate)
 
@@ -410,7 +410,7 @@ describe("hedge-take-home", async () => {
     let poolAcct = await program.account.poolState.fetch(pool)
     let initialPoolAmt = poolAcct.amount
 
-    await program.methods.stake(new BN(15*MULT))
+    await program.methods.stake(new BN(20*MULT))
     .accounts({
       pool: pool,
       tokenVault: stakeVault,
@@ -425,14 +425,14 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    assert(userTokenAcct.amount == initialUserBalance - BigInt(15*MULT))
-    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(15*MULT))
+    assert(userTokenAcct.amount == initialUserBalance - BigInt(20*MULT))
+    assert(stakeVaultAcct.amount == initialVaultBalance + BigInt(20*MULT))
     console.log("Total staked in vault: ", Number(stakeVaultAcct.amount))
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user2StakeEntry)
     poolAcct = await program.account.poolState.fetch(pool)
 
-    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (15*MULT))
+    assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (20*MULT))
     assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
     assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
     console.log("Total in pool state: ", poolAcct.amount.toNumber())
