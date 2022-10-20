@@ -8,7 +8,7 @@ hedge_take_home = "4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "/home/ixmorrow/.config/solana/id.json"
 
 [scripts]

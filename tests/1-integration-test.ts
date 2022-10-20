@@ -30,6 +30,7 @@ describe("hedge-take-home", async () => {
 
   it("Create RND Token mint", async () => {
     await safeAirdrop(programAuthority.publicKey, provider.connection)
+    await safeAirdrop(provider.wallet.publicKey, provider.connection)
     delay(10000)
 
     // create RND mint
