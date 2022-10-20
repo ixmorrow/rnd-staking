@@ -16,6 +16,7 @@ pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("9MNHTJJ1wd6uQrZfXk46T24qcWNZYpYf
 
 pub const MULT: u128 = 1_000_000_000;
 
+
 #[account]
 pub struct PoolState {
     pub authority: Pubkey,
