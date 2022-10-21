@@ -22,6 +22,7 @@ pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
 
         // calculate amount of tokens user is owed after rewards/burns are taken into account
         let out_amount: u128 = calculate_out_amount(&ctx.accounts.pool, &ctx.accounts.user_stake_entry);
+        msg!("Out amount: {}", out_amount);
 
         // create new staking position with rewards/burn amount included
         ctx.accounts.pool.user_deposit_amt = ctx.accounts.pool.user_deposit_amt.checked_sub(ctx.accounts.user_stake_entry.balance).unwrap()

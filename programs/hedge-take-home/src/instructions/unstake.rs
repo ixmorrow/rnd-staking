@@ -9,6 +9,8 @@ use {
 pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     // calculate amount of tokens user is owed after rewards/burns are taken into account
     let out_amount: u128 = calculate_out_amount(&ctx.accounts.pool, &ctx.accounts.user_stake_entry);
+    msg!("Out amount returned: {}", out_amount);
+    msg!("Total staked before withdrawal: {}", ctx.accounts.pool.amount);
 
     // program signer seeds
     let auth_bump = ctx.accounts.pool.vault_auth_bump;

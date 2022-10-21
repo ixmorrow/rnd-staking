@@ -3,7 +3,7 @@ import { Program } from "@project-serum/anchor";
 import { HedgeTakeHome } from "../target/types/hedge_take_home"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID, createMint, setAuthority, AuthorityType, getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
-import { delay, initializeTestUsers, safeAirdrop, MULT } from './utils/util'
+import { delay, initializeTestUsers, safeAirdrop, MULT, RATE_MULT } from './utils/util'
 import { userKeypair1, userKeypair2, userKeypair3, programAuthority } from './testKeypairs/testKeypairs'
 import { assert } from "chai"
 import { BN } from "bn.js"
@@ -277,7 +277,7 @@ describe("hedge-take-home", async () => {
 
     let rewardRate = (30*MULT)/initialStakeAmt.toNumber()
     console.log("Derived reward Rate: ", rewardRate)
-    assert(poolAcct.currentRewardRatio.toNumber()/LAMPORTS_PER_SOL == rewardRate)
+    assert(poolAcct.currentRewardRatio.toNumber()/RATE_MULT == rewardRate)
   })
 
   it('User 3 stakes RND', async () => {

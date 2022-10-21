@@ -3,6 +3,7 @@ import { PublicKey, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL
 import { TOKEN_PROGRAM_ID, mintTo, createAssociatedTokenAccount } from '@solana/spl-token'
 
 export const MULT: number = 1_000_000
+export const RATE_MULT: number = 100_000_000_000
 
 export function delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );

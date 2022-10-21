@@ -14,7 +14,8 @@ pub const STAKE_ENTRY_SIZE: usize = 8 + 32 + 1 + 8 + 8 + 16 + 16;
 
 pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("9MNHTJJ1wd6uQrZfXk46T24qcWNZYpYfwZKk6zho4poV");
 
-pub const MULT: u128 = 1_000_000_000;
+pub const MULT: u128 = 10_000_000_000;
+pub const RATE_MULT: u128 = 100_000_000_000;
 
 
 #[account]
@@ -55,35 +56,23 @@ pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntr
     msg!("Burn rate: {}", burn_rate);
 
     msg!("User staked amount: {}", user_stake_entry.balance);
-    let amount = user_stake_entry.balance;
-    //let cumulative_rate: u128;
+    let amount = user_stake_entry.balance.checked_mul(10 as u64).unwrap();
     let mut out_amount: u128;
-
-    // use the difference between the two rates
-    // if reward_rate > burn_rate {
-    //     cumulative_rate = reward_rate - burn_rate;
-    //     out_amount = (amount as u128).checked_add(
-    //         ((amount as u128).checked_mul(cumulative_rate).unwrap()).checked_div(MULT).unwrap()
-    //     ).unwrap();
-    // } else {
-    //     cumulative_rate = burn_rate - reward_rate;
-    //     out_amount = (amount as u128).checked_sub(
-    //         ((amount as u128).checked_mul(cumulative_rate).unwrap()).checked_div(MULT).unwrap()
-    //     ).unwrap();
-    // }
 
     // calculate rewards
     out_amount = (amount as u128).checked_add(
-                ((amount as u128).checked_mul(reward_rate).unwrap()).checked_div(MULT).unwrap()
+                ((amount as u128).checked_mul(reward_rate).unwrap()).checked_div(RATE_MULT).unwrap()
             ).unwrap();
+    msg!("Amount after rewards: {}", out_amount);
+
 
     // calculate burn
     out_amount = (out_amount).checked_sub(
-                ((out_amount).checked_mul(burn_rate).unwrap()).checked_div(MULT).unwrap()
+                ((out_amount).checked_mul(burn_rate).unwrap()).checked_div(RATE_MULT).unwrap()
             ).unwrap();
 
    // msg!("Cumulative rate: {}", cumulative_rate);
-    msg!("Amount after cumulative rate: {}", out_amount);
+   // msg!("Amount after cumulative rate: {}", out_amount);
 
-    out_amount
+    out_amount.checked_div(10 as u128).unwrap()
 }
