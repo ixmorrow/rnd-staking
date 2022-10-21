@@ -24,7 +24,7 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
         &ctx.accounts.vault_authority.key(),
         &[&ctx.accounts.vault_authority.key()],
         out_amount as u64,
-        4
+        6
     ).unwrap();
 
     invoke_signed(
