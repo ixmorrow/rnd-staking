@@ -44,6 +44,8 @@ pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
     msg!("Current pool total: {}", pool.amount);
     msg!("Amount of tokens deposited by users: {}", pool.user_deposit_amt);
 
+    msg!("Initial reward Rate: {}", user_entry.initial_reward_ratio);
+
     // update user stake entry
     user_entry.balance = user_entry.balance.checked_add(stake_amount).unwrap();
     msg!("User entry balance: {}", user_entry.balance);

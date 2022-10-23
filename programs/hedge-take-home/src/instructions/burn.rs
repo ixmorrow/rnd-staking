@@ -22,9 +22,15 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
 
     if pool_state.amount != 0 {
         // calculate new burn rate
-        pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_add((amount as u128).checked_mul(RATE_MULT).unwrap()
-        //.checked_div(pool_state.user_deposit_amt as u128).unwrap()).unwrap();  
-        .checked_div(pool_state.amount as u128).unwrap()).unwrap(); 
+        let new_burn_rate = RATE_MULT.checked_sub((amount as u128).checked_mul(RATE_MULT).unwrap()
+                                    .checked_div(pool_state.amount as u128).unwrap()).unwrap();
+        msg!("New rate (to be mult by previous: {}", new_burn_rate);
+
+        if pool_state.current_burn_ratio == 1 {
+            pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_mul(new_burn_rate).unwrap();
+        } else {
+            pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_mul(new_burn_rate).unwrap().checked_div(RATE_MULT).unwrap();
+        }
         
         msg!("User deposits: {}", pool_state.user_deposit_amt);
         msg!("Burn rate: {}", pool_state.current_burn_ratio);

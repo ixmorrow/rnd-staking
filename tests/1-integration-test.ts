@@ -87,8 +87,8 @@ describe("hedge-take-home", async () => {
     const poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.authority.toBase58() == programAuthority.publicKey.toBase58())
     assert(poolAcct.amount.toNumber() == 0)
-    assert(poolAcct.currentRewardRatio.toNumber() == 0)
-    assert(poolAcct.currentBurnRatio.toNumber() == 0)
+    assert(poolAcct.currentRewardRatio.toNumber() == 1)
+    assert(poolAcct.currentBurnRatio.toNumber() == 1)
   })
 
   it("Create user stake entry accounts", async () => {
@@ -275,7 +275,7 @@ describe("hedge-take-home", async () => {
     vaultAcct = await getAccount(provider.connection, stakeVault)
     assert(vaultAcct.amount == initialVaultAmt + BigInt(30*MULT))
 
-    let rewardRate = (30*MULT)/initialStakeAmt.toNumber()
+    let rewardRate = 1 + (30*MULT)/initialStakeAmt.toNumber()
     console.log("Derived reward Rate: ", rewardRate)
     assert(poolAcct.currentRewardRatio.toNumber()/RATE_MULT == rewardRate)
   })
@@ -347,9 +347,10 @@ describe("hedge-take-home", async () => {
     vaultAcct = await getAccount(provider.connection, stakeVault)
     assert(vaultAcct.amount == initialVaultAmt - BigInt(20*MULT))
 
-    let burnRate = (20*MULT)/poolAcct.amount.toNumber()
+    let burnRate = 1 - (20*MULT)/initialStakeAmt.toNumber()
     console.log("Derived burn rate: ", burnRate)
-    // assert(poolAcct.currentBurnRatio.toNumber()/LAMPORTS_PER_SOL == burnRate)
+    console.log("Burn rate on chain: ", poolAcct.currentBurnRatio.toNumber()/RATE_MULT)
+    // assert(poolAcct.currentBurnRatio.toNumber()/RATE_MULT == burnRate)
   })
 
   it('User 1 unstakes RND', async () => {

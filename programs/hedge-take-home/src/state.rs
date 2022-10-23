@@ -45,34 +45,42 @@ pub struct StakeEntry {
 }
 
 pub fn calculate_out_amount(pool_state: &PoolState, user_stake_entry: &StakeEntry) -> u128 {
-    // calculate difference between current reward rate and rate when initially staked
-    let reward_rate: u128 = pool_state.current_reward_ratio
-        .checked_sub(user_stake_entry.initial_reward_ratio).unwrap();
-    msg!("Reward rate: {}", reward_rate);
+    let reward_rate: u128;
 
-    // calculate difference between current burn rate and rate when initially staked
-    let burn_rate: u128 = pool_state.current_burn_ratio
-        .checked_sub(user_stake_entry.initial_burn_ratio).unwrap();
-    msg!("Burn rate: {}", burn_rate);
+    if user_stake_entry.initial_reward_ratio == 1 {
+        reward_rate = pool_state.current_reward_ratio;
+        msg!("Reward rate: {}", reward_rate);
+    } else {
+        reward_rate = pool_state.current_reward_ratio.checked_mul(RATE_MULT).unwrap()
+                                .checked_div(user_stake_entry.initial_reward_ratio).unwrap();
+        msg!("Reward rate: {}", reward_rate);
+    }
+
+    let burn_rate: u128;
+
+    if user_stake_entry.initial_burn_ratio == 1 {
+        burn_rate = pool_state.current_burn_ratio;
+        msg!("Reward rate: {}", burn_rate);
+    } else {
+        burn_rate = pool_state.current_burn_ratio.checked_mul(RATE_MULT).unwrap()
+                                .checked_div(user_stake_entry.initial_burn_ratio).unwrap();
+        msg!("Burn rate: {}", burn_rate);
+    }
 
     msg!("User staked amount: {}", user_stake_entry.balance);
-    let amount = user_stake_entry.balance.checked_mul(10 as u64).unwrap();
+    let amount = user_stake_entry.balance;
     let mut out_amount: u128;
 
     // calculate rewards
-    out_amount = (amount as u128).checked_add(
-                ((amount as u128).checked_mul(reward_rate).unwrap()).checked_div(RATE_MULT).unwrap()
-            ).unwrap();
+    out_amount = (amount as u128).checked_mul(reward_rate).unwrap().checked_div(RATE_MULT).unwrap();
     msg!("Amount after rewards: {}", out_amount);
 
 
     // calculate burn
-    out_amount = (out_amount).checked_sub(
-                ((out_amount).checked_mul(burn_rate).unwrap()).checked_div(RATE_MULT).unwrap()
-            ).unwrap();
+    out_amount = (out_amount).checked_mul(burn_rate).unwrap().checked_div(RATE_MULT).unwrap();
+    msg!("Amount after burn: {}", out_amount);
 
-   // msg!("Cumulative rate: {}", cumulative_rate);
-   // msg!("Amount after cumulative rate: {}", out_amount);
+    msg!("Amount after rewards/burn: {}", out_amount);
 
-    out_amount.checked_div(10 as u128).unwrap()
+    out_amount
 }
