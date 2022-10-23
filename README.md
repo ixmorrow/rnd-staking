@@ -5,7 +5,7 @@ The program makes use of a pull based system where each user's total rewards gai
 
 | Cluster | Address |
 | --- | --- |
-| `Devnet` | [4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa](https://explorer.solana.com/address/4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa?cluster=devnet) |
+| `Devnet` | [2wMP4GLFkKV3eZnr17PnB4JStRzUN4oet4xmvmgHWq9t](https://explorer.solana.com/address/2wMP4GLFkKV3eZnr17PnB4JStRzUN4oet4xmvmgHWq9t?cluster=devnet) |
 
 ## Instructions
 
