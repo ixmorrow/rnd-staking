@@ -3,6 +3,11 @@ This repo contains a staking contract that allows users to stake their `RND` tok
 
 The program makes use of a pull based system where each user's total rewards gained and tokens burned are derived once the user issues an instruction to unstake their tokens.
 
+The algorithm used in this program borrows heavily from the Scalable Rewards Distribution algorithms described in these two papers for the Ethereum network. The algorithm used in this program is slightly different, but is essentially a version of the methods described there implemented on Solana.
+
+* [Scalable Rewards Distribution on the Ethereum Blockchain](https://uploads-ssl.webflow.com/5ad71ffeb79acc67c8bcdaba/5ad8d1193a40977462982470_scalable-reward-distribution-paper.pdf)
+* [Scalable Rewards Distribution with Compounding Stakes](https://github.com/liquity/liquity/blob/master/papers/Scalable_Reward_Distribution_with_Compounding_Stakes.pdf)
+
 | Cluster | Address |
 | --- | --- |
 | `Devnet` | [2wMP4GLFkKV3eZnr17PnB4JStRzUN4oet4xmvmgHWq9t](https://explorer.solana.com/address/2wMP4GLFkKV3eZnr17PnB4JStRzUN4oet4xmvmgHWq9t?cluster=devnet) |
