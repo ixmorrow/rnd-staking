@@ -18,22 +18,22 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
     let pool_state = &mut ctx.accounts.pool_state;
     msg!("Tokens to burn: {}", amount);
     msg!("Initial total staked: {}", pool_state.amount);
-    msg!("Initial burn ratio: {}", pool_state.current_burn_ratio);
+    msg!("Initial distribution rate: {}", pool_state.distribution_rate);
 
     if pool_state.amount != 0 {
-        // calculate new burn rate
-        let new_burn_rate = RATE_MULT.checked_sub((amount as u128).checked_mul(RATE_MULT).unwrap()
+        // calculate new distribution rate
+        let new_distribution_rate = RATE_MULT.checked_sub((amount as u128).checked_mul(RATE_MULT).unwrap()
                                     .checked_div(pool_state.amount as u128).unwrap()).unwrap();
-        msg!("New rate (to be mult by previous: {}", new_burn_rate);
+        msg!("New rate (to be mult by previous: {}", new_distribution_rate);
 
-        if pool_state.current_burn_ratio == 1 {
-            pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_mul(new_burn_rate).unwrap();
+        if pool_state.distribution_rate == 1 {
+            pool_state.distribution_rate = pool_state.distribution_rate.checked_mul(new_distribution_rate).unwrap();
         } else {
-            pool_state.current_burn_ratio = pool_state.current_burn_ratio.checked_mul(new_burn_rate).unwrap().checked_div(RATE_MULT).unwrap();
+            pool_state.distribution_rate = pool_state.distribution_rate.checked_mul(new_distribution_rate).unwrap().checked_div(RATE_MULT).unwrap();
         }
         
         msg!("User deposits: {}", pool_state.user_deposit_amt);
-        msg!("Burn rate: {}", pool_state.current_burn_ratio);
+        msg!("Distribution rate: {}", pool_state.distribution_rate);
     }
 
     // update state in pool
@@ -41,7 +41,7 @@ pub fn handler(ctx: Context<BurnCtx>, amount: u64) -> Result<()> {
 
     msg!("Current total staked: {}", pool_state.amount);
     msg!("Amount deposited by Users: {}", pool_state.user_deposit_amt);
-    msg!("Current burn rate: {}", pool_state.current_burn_ratio);
+    msg!("Current distribution rate: {}", pool_state.distribution_rate);
 
     Ok(())
 }

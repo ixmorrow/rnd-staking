@@ -14,8 +14,7 @@ pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
 
     if ctx.accounts.user_stake_entry.balance == 0 {
         // if it's a user's first time staking, this is all that needs to be done
-        ctx.accounts.user_stake_entry.initial_reward_ratio = ctx.accounts.pool.current_reward_ratio;
-        ctx.accounts.user_stake_entry.initial_burn_ratio = ctx.accounts.pool.current_burn_ratio;
+        ctx.accounts.user_stake_entry.initial_distribution_rate = ctx.accounts.pool.distribution_rate;
     } 
     else {
         msg!("User adding to original stake position");
@@ -31,9 +30,8 @@ pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
 
         ctx.accounts.user_stake_entry.balance = out_amount as u64;
         msg!("User stake balance: {}", ctx.accounts.user_stake_entry.balance);
-
-        ctx.accounts.user_stake_entry.initial_reward_ratio = ctx.accounts.pool.current_reward_ratio;
-        ctx.accounts.user_stake_entry.initial_burn_ratio = ctx.accounts.pool.current_burn_ratio;
+        
+        ctx.accounts.user_stake_entry.initial_distribution_rate = ctx.accounts.pool.distribution_rate;
     }
 
     // update pool state amount
@@ -43,8 +41,6 @@ pub fn handler(ctx: Context<StakeCtx>, stake_amount: u64) -> Result<()> {
     pool.user_deposit_amt = pool.user_deposit_amt.checked_add(stake_amount).unwrap();
     msg!("Current pool total: {}", pool.amount);
     msg!("Amount of tokens deposited by users: {}", pool.user_deposit_amt);
-
-    msg!("Initial reward Rate: {}", user_entry.initial_reward_ratio);
 
     // update user stake entry
     user_entry.balance = user_entry.balance.checked_add(stake_amount).unwrap();

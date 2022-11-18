@@ -5,7 +5,7 @@ pub mod utils;
 
 use {anchor_lang::prelude::*, instructions::*};
 
-declare_id!("4Cs5Z12AAr7F1qPQoba27kFogYs3JwncDiRpe4SUCHYa");
+declare_id!("2wMP4GLFkKV3eZnr17PnB4JStRzUN4oet4xmvmgHWq9t");
 
 #[program]
 pub mod hedge_take_home {

@@ -87,8 +87,9 @@ describe("hedge-take-home", async () => {
     const poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.authority.toBase58() == programAuthority.publicKey.toBase58())
     assert(poolAcct.amount.toNumber() == 0)
-    assert(poolAcct.currentRewardRatio.toNumber() == 1)
-    assert(poolAcct.currentBurnRatio.toNumber() == 1)
+    //assert(poolAcct.currentRewardRatio.toNumber() == 1)
+    //assert(poolAcct.currentBurnRatio.toNumber() == 1)
+    assert(poolAcct.distributionRate.toNumber() == 1)
   })
 
   it("Create user stake entry accounts", async () => {
@@ -204,8 +205,7 @@ describe("hedge-take-home", async () => {
     poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.amount.toNumber() / MULT == initialPoolAmt.toNumber() + 200)
     assert(poolAcct.amount.toNumber() == updatedUserEntryAcct.balance.toNumber())
-    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+    assert(poolAcct.distributionRate.toNumber() == updatedUserEntryAcct.initialDistributionRate.toNumber())
   })
 
   it('User 2 stakes RND', async () => {
@@ -246,13 +246,13 @@ describe("hedge-take-home", async () => {
 
     poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (400*MULT))
-    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+    assert(poolAcct.distributionRate.toNumber() == updatedUserEntryAcct.initialDistributionRate.toNumber())
   })
 
   it('Permissioned RND distribution', async () => {
     let poolAcct = await program.account.poolState.fetch(pool)
     const initialStakeAmt = poolAcct.amount
+    const initialDistributionRate = poolAcct.distributionRate
 
     let vaultAcct = await getAccount(provider.connection, stakeVault)
     const initialVaultAmt = vaultAcct.amount
@@ -275,9 +275,10 @@ describe("hedge-take-home", async () => {
     vaultAcct = await getAccount(provider.connection, stakeVault)
     assert(vaultAcct.amount == initialVaultAmt + BigInt(30*MULT))
 
-    let rewardRate = 1 + (30*MULT)/initialStakeAmt.toNumber()
-    console.log("Derived reward Rate: ", rewardRate)
-    assert(poolAcct.currentRewardRatio.toNumber()/RATE_MULT == rewardRate)
+    let tempDistributionRate = 1 + (30*MULT)/initialStakeAmt.toNumber()
+    let distributionRate = tempDistributionRate * initialDistributionRate.toNumber() 
+    console.log("Derived distribution Rate: ", distributionRate)
+    assert(poolAcct.distributionRate.toNumber()/RATE_MULT == distributionRate)
   })
 
   it('User 3 stakes RND', async () => {
@@ -318,8 +319,7 @@ describe("hedge-take-home", async () => {
 
     poolAcct = await program.account.poolState.fetch(pool)
     assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (200*MULT))
-    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+    assert(poolAcct.distributionRate.toNumber() == updatedUserEntryAcct.initialDistributionRate.toNumber())
   })
 
   it('Permissioned RND reward burn', async () => {
@@ -348,8 +348,8 @@ describe("hedge-take-home", async () => {
     assert(vaultAcct.amount == initialVaultAmt - BigInt(20*MULT))
 
     let burnRate = 1 - (20*MULT)/initialStakeAmt.toNumber()
-    console.log("Derived burn rate: ", burnRate)
-    console.log("Burn rate on chain: ", poolAcct.currentBurnRatio.toNumber()/RATE_MULT)
+    console.log("Derived distribution rate: ", burnRate)
+    // console.log("Burn rate on chain: ", poolAcct.currentBurnRatio.toNumber()/RATE_MULT)
     // assert(poolAcct.currentBurnRatio.toNumber()/RATE_MULT == burnRate)
   })
 
@@ -385,19 +385,17 @@ describe("hedge-take-home", async () => {
 
     userTokenAcct = await getAccount(provider.connection, userAta)
     stakeVaultAcct = await getAccount(provider.connection, stakeVault)
-    const rewardRate = (poolAcct.currentRewardRatio.toNumber() - userEntryAcct.initialRewardRatio.toNumber()) / LAMPORTS_PER_SOL
-    const burnRate = (poolAcct.currentBurnRatio.toNumber() - userEntryAcct.initialBurnRatio.toNumber()) / LAMPORTS_PER_SOL
-    let amtAfterRewards = initialEntryBalance + (initialEntryBalance*rewardRate)
-    let expectedAmt = amtAfterRewards - (amtAfterRewards*burnRate)
+    const distributionRate = (poolAcct.distributionRate.toNumber() - userEntryAcct.initialDistributionRate.toNumber()) / RATE_MULT
+    let expectedAmt = Math.round(initialEntryBalance*distributionRate)
 
-    //assert(Number(userTokenAcct.amount) == initialUserBalance + expectedAmt)
-    //assert(Number(stakeVaultAcct.amount) == initialVaultBalance - expectedAmt)
+    assert(Number(userTokenAcct.amount) == initialUserBalance + expectedAmt)
+    assert(Number(stakeVaultAcct.amount) == initialVaultBalance - expectedAmt)
 
     let updatedUserEntryAcct = await program.account.stakeEntry.fetch(user1StakeEntry)
     assert(updatedUserEntryAcct.balance.toNumber() == 0)
 
     poolAcct = await program.account.poolState.fetch(pool)
-    //assert(poolAcct.amount.toNumber() == initialPoolAmt - expectedAmt)
+    assert(poolAcct.amount.toNumber() == initialPoolAmt - expectedAmt)
   })
 
   it('User 2 adds to staking position', async () => {
@@ -435,8 +433,7 @@ describe("hedge-take-home", async () => {
     poolAcct = await program.account.poolState.fetch(pool)
 
     assert(poolAcct.amount.toNumber() == initialPoolAmt.toNumber() + (15*MULT))
-    assert(poolAcct.currentRewardRatio.toNumber() == updatedUserEntryAcct.initialRewardRatio.toNumber())
-    assert(poolAcct.currentBurnRatio.toNumber() == updatedUserEntryAcct.initialBurnRatio.toNumber())
+    assert(poolAcct.distributionRate.toNumber() == updatedUserEntryAcct.initialDistributionRate.toNumber())
     console.log("Total in pool state: ", poolAcct.amount.toNumber())
   })
 
